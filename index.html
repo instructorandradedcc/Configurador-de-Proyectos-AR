@@ -9,65 +9,106 @@
     <style>
         body { font-family: 'Inter', sans-serif; }
         .loader {
-            border: 4px solid #f3f3f3;
-            border-top: 4px solid #3498db;
+            border: 4px solid rgba(255,255,255,0.2);
+            border-top: 4px solid #6366f1; /* Indigo-500 */
             border-radius: 50%;
             width: 32px;
             height: 32px;
             animation: spin 1s linear infinite;
         }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        .card-bg-dark {
+            background-color: rgba(17, 24, 39, 0.7); /* bg-gray-900 with opacity */
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+        }
     </style>
 </head>
-<body class="bg-gray-100 flex items-center justify-center min-h-screen">
+<body class="bg-gradient-to-br from-gray-900 via-slate-900 to-black flex items-center justify-center min-h-screen p-4">
 
-    <div class="container mx-auto p-6 max-w-2xl bg-white rounded-xl shadow-lg">
+    <div class="container mx-auto p-8 max-w-2xl card-bg-dark rounded-2xl shadow-2xl border border-white/10 relative">
         <div class="text-center mb-8">
-            <h1 class="text-3xl font-bold text-gray-800">Configurador de Proyectos AR</h1>
-            <p class="text-gray-500 mt-2">Genera tu archivo `index.html` personalizado para cada libro.</p>
+            <h1 class="text-4xl font-bold text-gray-100">Configurador de Proyectos AR</h1>
+            <p class="text-gray-400 mt-2">Genera tu archivo <code class="bg-gray-700 text-gray-300 text-sm px-1.5 py-0.5 rounded">index.html</code> personalizado para cada libro.</p>
+        </div>
+
+        <!-- SECCIÓN DE AUTENTICACIÓN MEJORADA -->
+        <div class="bg-black/20 border border-white/10 rounded-lg p-4 mb-8">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h2 class="font-semibold text-gray-200">Conexión Segura con GitHub</h2>
+                    <p id="auth-status" class="text-sm text-gray-400">No conectado. El análisis puede fallar por límites de la API.</p>
+                </div>
+                <button id="connect-github-btn" class="bg-gray-800 text-white font-semibold py-2 px-4 rounded-lg hover:bg-gray-700 transition-all duration-300 text-sm flex items-center gap-2 shadow-md hover:shadow-lg border border-white/10">
+                    <!-- SVG will be filled by JS -->
+                </button>
+            </div>
+            <div id="token-instructions" class="hidden mt-4 pt-4 border-t border-gray-700">
+                <p class="text-sm text-gray-300 mb-2">Para que esta herramienta pueda leer repositorios públicos en tu nombre sin restricciones, necesitas un <strong>Token de Acceso Personal</strong>.</p>
+                <ol class="list-decimal list-inside text-sm space-y-1 mb-3 text-gray-400">
+                    <li><a href="https://github.com/settings/tokens/new?scopes=public_repo&description=Configurador%20AR" target="_blank" class="text-indigo-400 hover:underline">Haz clic aquí para generar un nuevo token en tu cuenta de GitHub.</a></li>
+                    <li>Asegúrate de que el permiso `public_repo` (para leer repositorios públicos) esté marcado.</li>
+                    <li>Haz clic en "Generate token", copia el código y pégalo abajo.</li>
+                </ol>
+                <div class="flex gap-2">
+                    <input type="password" id="github-token" class="w-full p-2 bg-gray-800/50 border border-gray-600 text-white rounded-md shadow-sm focus:ring-2 focus:ring-indigo-400 focus:border-indigo-400 transition" placeholder="Pega tu token aquí (ghp_...)">
+                    <button id="save-token-btn" class="bg-indigo-600 text-white font-semibold py-2 px-4 rounded-lg hover:bg-indigo-700 transition">Guardar</button>
+                </div>
+            </div>
         </div>
 
         <div class="space-y-6">
-            <div>
-                <label for="github-repo" class="block text-sm font-medium text-gray-700 mb-1">1. URL del Repositorio de GitHub</label>
-                <input type="url" id="github-repo" class="w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500" placeholder="https://github.com/usuario/nombre-del-repo">
-                <p class="text-xs text-gray-500 mt-1">Ej: https://github.com/instructorandradedcc/7777ar</p>
+             <!-- Paso 1 -->
+            <div class="flex items-start gap-4">
+                <div class="flex-shrink-0 w-8 h-8 bg-indigo-600 text-white rounded-full flex items-center justify-center font-bold text-lg shadow-lg">1</div>
+                <div class="flex-grow">
+                    <label for="github-repo" class="block text-sm font-medium text-gray-300 mb-1">URL del Repositorio a Analizar</label>
+                    <input type="url" id="github-repo" class="w-full p-2 bg-gray-800/50 border border-gray-600 text-white rounded-md shadow-sm focus:ring-2 focus:ring-indigo-400 focus:border-indigo-400 transition" placeholder="https://github.com/usuario/nombre-del-repo">
+                </div>
             </div>
-
-            <div>
-                <label for="project-title" class="block text-sm font-medium text-gray-700 mb-1">2. Título del Proyecto</label>
-                <input type="text" id="project-title" class="w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500" placeholder="Mi Libro de Reciclaje AR">
+             <!-- Paso 2 -->
+             <div class="flex items-start gap-4">
+                <div class="flex-shrink-0 w-8 h-8 bg-indigo-600 text-white rounded-full flex items-center justify-center font-bold text-lg shadow-lg">2</div>
+                <div class="flex-grow">
+                    <label for="project-title" class="block text-sm font-medium text-gray-300 mb-1">Título del Proyecto</label>
+                    <input type="text" id="project-title" class="w-full p-2 bg-gray-800/50 border border-gray-600 text-white rounded-md shadow-sm focus:ring-2 focus:ring-indigo-400 focus:border-indigo-400 transition" placeholder="Ej: Mi Libro de Reciclaje AR">
+                </div>
             </div>
-
-            <div>
-                <label for="logo-url" class="block text-sm font-medium text-gray-700 mb-1">3. URL del Logo de la Fundación</label>
-                <input type="url" id="logo-url" class="w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500" placeholder="https://raw.githubusercontent.com/.../logo.jpg">
+             <!-- Paso 3 -->
+             <div class="flex items-start gap-4">
+                <div class="flex-shrink-0 w-8 h-8 bg-indigo-600 text-white rounded-full flex items-center justify-center font-bold text-lg shadow-lg">3</div>
+                <div class="flex-grow">
+                    <label for="logo-url" class="block text-sm font-medium text-gray-300 mb-1">URL del Logo</label>
+                    <input type="url" id="logo-url" class="w-full p-2 bg-gray-800/50 border border-gray-600 text-white rounded-md shadow-sm focus:ring-2 focus:ring-indigo-400 focus:border-indigo-400 transition" placeholder="https://.../logo.jpg">
+                </div>
             </div>
         </div>
 
         <div class="mt-8 text-center">
-            <button id="analyze-repo-btn" class="bg-indigo-600 text-white font-bold py-3 px-6 rounded-lg hover:bg-indigo-700 transition duration-300 shadow-md">
+            <button id="analyze-repo-btn" class="bg-gradient-to-r from-blue-600 to-indigo-700 text-white font-bold py-3 px-8 rounded-lg hover:opacity-90 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105">
                 Analizar Repositorio
             </button>
         </div>
         
         <div id="status-container" class="mt-6 text-center"></div>
 
-        <div id="file-preview" class="mt-6 hidden bg-gray-50 p-4 rounded-lg border">
-            <h3 class="font-semibold text-lg mb-2">Archivos Encontrados:</h3>
-            <ul id="file-list" class="list-disc list-inside text-left text-gray-600 text-sm"></ul>
+        <div id="file-preview" class="mt-6 hidden bg-black/20 p-4 rounded-lg border border-white/10">
+            <h3 class="font-semibold text-lg mb-2 text-gray-200">Archivos Encontrados:</h3>
+            <ul id="file-list" class="list-disc list-inside text-left text-gray-300 text-sm"></ul>
         </div>
 
         <div class="mt-8 text-center">
-            <button id="generate-btn" disabled class="bg-green-600 text-white font-bold py-3 px-6 rounded-lg hover:bg-green-700 transition duration-300 disabled:bg-gray-400 disabled:cursor-not-allowed shadow-md">
+            <button id="generate-btn" disabled class="bg-gradient-to-r from-green-500 to-emerald-600 text-white font-bold py-3 px-8 rounded-lg hover:opacity-90 transition-all duration-300 disabled:from-gray-500 disabled:to-gray-600 disabled:cursor-not-allowed disabled:transform-none disabled:shadow-none shadow-lg hover:shadow-xl transform hover:scale-105">
                 Generar y Descargar index.html
             </button>
         </div>
+        <p class="text-xs text-gray-500 absolute bottom-4 right-6">Versión 1.3</p>
     </div>
 
     <script>
     document.addEventListener('DOMContentLoaded', () => {
         const githubRepoInput = document.getElementById('github-repo');
+        const githubTokenInput = document.getElementById('github-token');
         const projectTitleInput = document.getElementById('project-title');
         const logoUrlInput = document.getElementById('logo-url');
         const analyzeBtn = document.getElementById('analyze-repo-btn');
@@ -75,20 +116,64 @@
         const statusContainer = document.getElementById('status-container');
         const filePreview = document.getElementById('file-preview');
         const fileList = document.getElementById('file-list');
+        
+        // Auth UI Elements
+        const connectGithubBtn = document.getElementById('connect-github-btn');
+        const tokenInstructions = document.getElementById('token-instructions');
+        const saveTokenBtn = document.getElementById('save-token-btn');
+        const authStatus = document.getElementById('auth-status');
 
         let projectConfig = {};
 
+        // --- AUTH LOGIC ---
+        function updateAuthUI() {
+            const token = sessionStorage.getItem('github_token');
+            if (token) {
+                authStatus.textContent = 'Conectado a GitHub.';
+                authStatus.className = 'text-sm text-green-400 font-medium';
+                connectGithubBtn.innerHTML = 'Desconectar';
+                tokenInstructions.classList.add('hidden');
+            } else {
+                authStatus.textContent = 'No conectado. El análisis puede fallar por límites.';
+                authStatus.className = 'text-sm text-gray-400';
+                connectGithubBtn.innerHTML = `<svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path fill-rule="evenodd" d="M12 2C6.477 2 2 6.477 2 12c0 4.418 2.865 8.168 6.839 9.49.5.092.682-.217.682-.482 0-.237-.009-.868-.014-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.031-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.203 2.398.1 2.651.64.7 1.03 1.595 1.03 2.688 0 3.848-2.338 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.001 10.001 0 0022 12c0-5.523-4.477-10-10-10z" clip-rule="evenodd" /></svg> Conectar`;
+            }
+        }
+
+        connectGithubBtn.addEventListener('click', () => {
+            const token = sessionStorage.getItem('github_token');
+            if (token) {
+                sessionStorage.removeItem('github_token');
+                githubTokenInput.value = '';
+                updateAuthUI();
+            } else {
+                tokenInstructions.classList.toggle('hidden');
+            }
+        });
+
+        saveTokenBtn.addEventListener('click', () => {
+            const token = githubTokenInput.value.trim();
+            if (token) {
+                sessionStorage.setItem('github_token', token);
+                updateAuthUI();
+            }
+        });
+        
+        updateAuthUI(); // Check on page load
+
+        // --- CORE LOGIC ---
         analyzeBtn.addEventListener('click', handleAnalyzeRepository);
         generateBtn.addEventListener('click', handleGenerateAndDownload);
         
         async function handleAnalyzeRepository() {
             const repoUrl = githubRepoInput.value.trim();
+            const token = sessionStorage.getItem('github_token') || '';
+
             if (!repoUrl) {
                 showStatus('Por favor, ingresa la URL de un repositorio de GitHub.', 'error');
                 return;
             }
 
-            // Parsear la URL para obtener usuario y nombre del repo
             const urlParts = repoUrl.match(/github\.com\/([^\/]+)\/([^\/]+)/);
             if (!urlParts || urlParts.length < 3) {
                 showStatus('La URL del repositorio no es válida. Formato esperado: https://github.com/usuario/repo', 'error');
@@ -108,11 +193,10 @@
                     images: 'asetss/imagenes'
                 };
 
-                const modelFiles = await getFileNamesFromRepo(owner, repo, paths.models, ['.glb']);
-                const markerFiles = await getFileNamesFromRepo(owner, repo, paths.markers, ['.mind']);
-                const imageFiles = await getFileNamesFromRepo(owner, repo, paths.images, ['.jpg', '.png']);
+                const modelFiles = await getFileNamesFromRepo(owner, repo, paths.models, ['.glb'], token);
+                const markerFiles = await getFileNamesFromRepo(owner, repo, paths.markers, ['.mind'], token);
+                const imageFiles = await getFileNamesFromRepo(owner, repo, paths.images, ['.jpg', '.png'], token);
                 
-                // Encontrar los assets que tienen los 3 archivos (modelo, marcador, imagen)
                 const commonAssets = modelFiles.filter(modelName => 
                     markerFiles.includes(modelName) && imageFiles.includes(modelName)
                 );
@@ -129,28 +213,38 @@
                 projectConfig = {
                     title: projectTitleInput.value || 'Proyecto AR',
                     logoUrl: logoUrlInput.value || 'https://placehold.co/120x80/e2e8f0/94a3b8?text=Logo',
-                    githubRawUrl: `https://raw.githubusercontent.com/${owner}/${repo}/main/`, // Asumimos la rama 'main'
+                    githubRawUrl: `https://raw.githubusercontent.com/${owner}/${repo}/main/`,
                     assetNames: commonAssets
                 };
                 
                 generateBtn.disabled = false;
 
             } catch (error) {
-                showStatus(`Error: ${error.message}`, 'error');
+                showStatus(`Error: ${error.message}. Asegúrate de que la URL del repositorio sea correcta, que sea público y que el token (si se usa) sea válido.`, 'error');
                 console.error('Error fetching from GitHub:', error);
             }
         }
         
-        async function getFileNamesFromRepo(owner, repo, path, extensions) {
+        async function getFileNamesFromRepo(owner, repo, path, extensions, token) {
             const apiUrl = `https://api.github.com/repos/${owner}/${repo}/contents/${path}`;
-            const response = await fetch(apiUrl);
+            const headers = {
+                'Accept': 'application/vnd.github.v3+json',
+            };
+            if (token) {
+                headers['Authorization'] = `token ${token}`;
+            }
+
+            const response = await fetch(apiUrl, { headers });
             if (!response.ok) {
-                throw new Error(`No se pudo acceder a la carpeta '${path}' en el repositorio. ¿Existe y es pública?`);
+                throw new Error(`No se pudo acceder a la carpeta '${path}' (código: ${response.status}).`);
             }
             const files = await response.json();
+            if (!Array.isArray(files)) {
+                 throw new Error(`La respuesta para la carpeta '${path}' no fue una lista de archivos. Revisa la ruta.`);
+            }
             return files
                 .filter(file => extensions.some(ext => file.name.endsWith(ext)))
-                .map(file => file.name.split('.').slice(0, -1).join('.')); // Obtiene el nombre base sin extensión
+                .map(file => file.name.split('.').slice(0, -1).join('.'));
         }
 
         function handleGenerateAndDownload() {
@@ -176,32 +270,30 @@
             statusContainer.innerHTML = '';
             const statusDiv = document.createElement('div');
             let baseClasses = 'p-4 rounded-md text-sm ';
-            let typeClasses = '';
+            let contentWrapper = document.createElement('div');
             
             if (type === 'error') {
-                typeClasses = 'bg-red-100 border border-red-400 text-red-700';
+                statusDiv.className = baseClasses + 'bg-red-900/50 border border-red-500/50 text-red-300';
             } else if (type === 'success') {
-                typeClasses = 'bg-green-100 border border-green-400 text-green-700';
-            } else { // loading or info
-                typeClasses = 'bg-blue-100 border border-blue-400 text-blue-700 flex items-center justify-center gap-2';
-                if (type === 'loading') {
-                    const loader = document.createElement('div');
-                    loader.className = 'loader';
-                    statusContainer.appendChild(loader);
-                }
+                statusDiv.className = baseClasses + 'bg-green-900/50 border border-green-500/50 text-green-300';
+            } else { 
+                statusDiv.className = baseClasses + 'bg-blue-900/50 border border-blue-500/50 text-blue-300 flex items-center justify-center gap-2';
             }
             
-            statusDiv.className = baseClasses + typeClasses;
-            statusDiv.textContent = message;
+            if (type === 'loading') {
+                const loader = document.createElement('div');
+                loader.className = 'loader';
+                statusDiv.appendChild(loader);
+            }
+
+            contentWrapper.textContent = message;
+            statusDiv.appendChild(contentWrapper);
             statusContainer.appendChild(statusDiv);
         }
 
         function generateIndexHtmlContent(config) {
-            // Convierte el array de assets a una cadena de texto para inyectarla en el JS
             const assetNamesJsArray = JSON.stringify(config.assetNames);
 
-            // Esta es la plantilla completa de tu archivo index.html original.
-            // Las partes personalizables se reemplazan con los valores de 'config'.
             return `
 <!DOCTYPE html>
 <html lang="es">
@@ -336,153 +428,185 @@
     </div>
     <div id="ar-preloader" class="hidden fixed inset-0 bg-black bg-opacity-75 flex flex-col justify-center items-center z-[10000]"><div class="loader"></div><p class="text-white text-lg mt-4">Iniciando cámara...</p></div>
     <script type="module">
-    import * as THREE from 'three';
-    import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
-    import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
-    import { DragControls } from 'three/addons/controls/DragControls.js';
-    document.addEventListener('DOMContentLoaded', () => {
-        const state = { assets: [], currentPage: 'page-upload', isArActive: false, areAssetsPreloaded: false, };
-        let editor = { scene: null, camera: null, renderer: null, controls: null, dragControls: null, loader: new GLTFLoader(), textureLoader: new THREE.TextureLoader(), currentTarget: null, currentPlane: null, };
-        const CACHE_NAME = 'ar-assets-cache-v1';
-        const GITHUB_BASE_URL = '${config.githubRawUrl}';
-        const ASSET_NAMES = ${assetNamesJsArray};
-        AFRAME.registerComponent('ar-rotator', {
-            schema: { rotationFactor: { type: 'number', default: 1 } },
-            init: function () {
-                this.isVisible = false; this.isDragging = false; this.previousDrag = { x: 0, y: 0 };
-                const canvas = this.el.sceneEl.canvas;
-                const startDrag = (x, y) => { if (this.isVisible) { this.isDragging = true; this.previousDrag = { x, y }; } };
-                const drag = (x, y) => { if (this.isDragging && this.isVisible) { const deltaX = x - this.previousDrag.x; const deltaY = y - this.previousDrag.y; this.el.object3D.rotation.y += THREE.MathUtils.degToRad(deltaX * this.data.rotationFactor); this.el.object3D.rotation.x += THREE.MathUtils.degToRad(deltaY * this.data.rotationFactor); this.previousDrag = { x, y }; } };
-                const endDrag = () => { this.isDragging = false; };
-                canvas.addEventListener('touchstart', (e) => { if (e.touches.length === 1) startDrag(e.touches[0].clientX, e.touches[0].clientY); });
-                canvas.addEventListener('touchmove', (e) => { if (e.touches.length === 1) drag(e.touches[0].clientX, e.touches[0].clientY); });
-                canvas.addEventListener('touchend', endDrag);
-                canvas.addEventListener('mousedown', (e) => startDrag(e.clientX, e.clientY));
-                canvas.addEventListener('mousemove', (e) => drag(e.clientX, e.clientY));
-                canvas.addEventListener('mouseup', endDrag);
-                canvas.addEventListener('mouseleave', endDrag);
-                this.el.parentEl.addEventListener('targetFound', () => { this.isVisible = true; });
-                this.el.parentEl.addEventListener('targetLost', () => { this.isVisible = false; });
-            },
+        import * as THREE from 'three';
+        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+        import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+        import { DragControls } from 'three/addons/controls/DragControls.js';
+        document.addEventListener('DOMContentLoaded', () => {
+            const state = { assets: [], currentPage: 'page-upload', isArActive: false, areAssetsPreloaded: false, };
+            let editor = { scene: null, camera: null, renderer: null, controls: null, dragControls: null, loader: new GLTFLoader(), textureLoader: new THREE.TextureLoader(), currentTarget: null, currentPlane: null, };
+            const CACHE_NAME = 'ar-assets-cache-v1-${config.title}';
+            const GITHUB_BASE_URL = '${config.githubRawUrl}';
+            const ASSET_NAMES = ${assetNamesJsArray};
+            
+            AFRAME.registerComponent('ar-rotator', {
+                schema: { rotationFactor: { type: 'number', default: 1 } },
+                init: function () {
+                    this.isVisible = false; this.isDragging = false; this.previousDrag = { x: 0, y: 0 };
+                    const canvas = this.el.sceneEl.canvas;
+                    const startDrag = (x, y) => { if (this.isVisible) { this.isDragging = true; this.previousDrag = { x, y }; } };
+                    const drag = (x, y) => { if (this.isDragging && this.isVisible) { const deltaX = x - this.previousDrag.x; const deltaY = y - this.previousDrag.y; this.el.object3D.rotation.y += THREE.MathUtils.degToRad(deltaX * this.data.rotationFactor); this.el.object3D.rotation.x += THREE.MathUtils.degToRad(deltaY * this.data.rotationFactor); this.previousDrag = { x, y }; } };
+                    const endDrag = () => { this.isDragging = false; };
+                    canvas.addEventListener('touchstart', (e) => { if (e.touches.length === 1) startDrag(e.touches[0].clientX, e.touches[0].clientY); });
+                    canvas.addEventListener('touchmove', (e) => { if (e.touches.length === 1) drag(e.touches[0].clientX, e.touches[0].clientY); });
+                    canvas.addEventListener('touchend', endDrag);
+                    canvas.addEventListener('mousedown', (e) => startDrag(e.clientX, e.clientY));
+                    canvas.addEventListener('mousemove', (e) => drag(e.clientX, e.clientY));
+                    canvas.addEventListener('mouseup', endDrag);
+                    canvas.addEventListener('mouseleave', endDrag);
+                    this.el.parentEl.addEventListener('targetFound', () => { this.isVisible = true; });
+                    this.el.parentEl.addEventListener('targetLost', () => { this.isVisible = false; });
+                },
+            });
+
+            async function fetchWithCache(url) { const cache = await caches.open(CACHE_NAME); const cachedResponse = await cache.match(url); if (cachedResponse) return cachedResponse; const networkResponse = await fetch(url); if (networkResponse.ok) await cache.put(url, networkResponse.clone()); return networkResponse; }
+            
+            function displayLoadedImages(assets) { const container = document.getElementById('image-preview-container'); container.innerHTML = \`<h3 class="text-lg font-semibold mb-2 text-center">Imágenes de Marcadores Cargadas</h3>\`; const grid = document.createElement('div'); grid.className = 'grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4'; assets.forEach(asset => { const img = document.createElement('img'); img.src = asset.imageDataUrl; img.className = 'w-full h-auto object-cover rounded-lg shadow-md'; grid.appendChild(img); }); container.appendChild(grid); }
+            
+            async function loadAssetsFromGitHub() {
+                const loadingStatusDiv = document.getElementById('loading-status'); const loadingText = document.getElementById('loading-text'); const progressBar = document.getElementById('loading-progress-bar'); const githubBtn = document.getElementById('load-from-github-btn');
+                loadingStatusDiv.classList.remove('hidden'); githubBtn.disabled = true; progressBar.style.width = '0%'; progressBar.classList.remove('bg-red-600');
+                const totalAssets = ASSET_NAMES.length; let loadedCount = 0;
+                const promises = ASSET_NAMES.map(async (name, index) => {
+                    const urls = { marker: \`\${GITHUB_BASE_URL}asetss/markers/\${name}.mind\`, model: \`\${GITHUB_BASE_URL}asetss/modelss/\${name}.glb\`, image: \`\${GITHUB_BASE_URL}asetss/imagenes/\${name}.jpg\` };
+                    const [markerRes, modelRes, imageRes] = await Promise.all([ fetchWithCache(urls.marker), fetchWithCache(urls.model), fetch(urls.image).catch(() => fetch(\`\${GITHUB_BASE_URL}asetss/imagenes/\${name}.png\`)) ]);
+                    if (!markerRes.ok || !modelRes.ok || !imageRes.ok) { throw new Error(\`Failed to fetch assets for \${name}\`); }
+                    const [markerBlob, modelBlob, imageBlob] = await Promise.all([ markerRes.blob(), modelRes.blob(), imageRes.blob() ]);
+                    loadedCount++; progressBar.style.width = \`\${(loadedCount / totalAssets) * 100}%\`; loadingText.textContent = \`Cargando \${name}... (\${loadedCount}/\${totalAssets})\`;
+                    return { id: index, name: name, markerDataUrl: URL.createObjectURL(markerBlob), modelDataUrl: URL.createObjectURL(modelBlob), imageDataUrl: URL.createObjectURL(imageBlob), transform: { position: { x: 0, y: 0, z: 0 }, rotation: { x: 0, y: 0, z: 0 }, scale: { x: 1, y: 1, z: 1 } }, hasBeenNormalized: false, normalizationFactor: 1, };
+                });
+                try {
+                    state.assets = await Promise.all(promises); loadingText.textContent = '¡Todos los recursos cargados y guardados en caché!'; displayLoadedImages(state.assets); document.getElementById('goto-editor-btn').disabled = false;
+                    setTimeout(() => { loadingStatusDiv.classList.add('hidden'); }, 1000);
+                } catch (error) { loadingText.textContent = 'Error al cargar los recursos. Revisa la consola.'; progressBar.classList.add('bg-red-600'); console.error("Asset loading failed:", error); } finally { githubBtn.disabled = false; }
+            }
+
+            function initEditor() {
+                const canvas = document.getElementById('editor-canvas'); const container = document.getElementById('editor-container'); if (!canvas || !container || editor.renderer) return;
+                editor.scene = new THREE.Scene(); editor.scene.background = new THREE.Color(0xeeeeee); editor.camera = new THREE.PerspectiveCamera(75, container.clientWidth / container.clientHeight, 0.1, 1000); editor.camera.position.set(0, 0.25, 1.5);
+                editor.scene.add(new THREE.AmbientLight(0xffffff, 2)); const directionalLight = new THREE.DirectionalLight(0xffffff, 3); directionalLight.position.set(2, 5, 3); editor.scene.add(directionalLight);
+                editor.renderer = new THREE.WebGLRenderer({ canvas: canvas, antialias: true }); editor.renderer.setSize(container.clientWidth, container.clientHeight); editor.renderer.setPixelRatio(window.devicePixelRatio);
+                editor.controls = new OrbitControls(editor.camera, editor.renderer.domElement); editor.controls.enableDamping = true;
+                const animate = () => { requestAnimationFrame(animate); editor.controls.update(); editor.renderer.render(editor.scene, editor.camera); }; animate();
+            }
+
+            function populateEditorSelector() { const assetSelector = document.getElementById('asset-selector'); assetSelector.innerHTML = ''; state.assets.forEach(asset => { const option = document.createElement('option'); option.value = asset.id; option.textContent = asset.name; assetSelector.appendChild(option); }); }
+            function updateTransformInputs(transform) { document.getElementById('pos-x').value = transform.position.x.toFixed(2); document.getElementById('pos-y').value = transform.position.y.toFixed(2); document.getElementById('pos-z').value = transform.position.z.toFixed(2); document.getElementById('rot-x').value = Math.round(transform.rotation.x); document.getElementById('rot-y').value = Math.round(transform.rotation.y); document.getElementById('rot-z').value = Math.round(transform.rotation.z); document.getElementById('scale').value = transform.scale.x.toFixed(2); }
+            
+            function displayAssetInEditor(assetId) {
+                const asset = state.assets.find(a => a.id === assetId); if (!asset || !editor.scene) return;
+                if (editor.currentTarget) { editor.scene.remove(editor.currentTarget); if (editor.dragControls) editor.dragControls.dispose(); } if (editor.currentPlane) editor.scene.remove(editor.currentPlane);
+                editor.textureLoader.load(asset.imageDataUrl, (texture) => { const aspect = texture.image.width / texture.image.height; const planeGeom = new THREE.PlaneGeometry(1, 1 / aspect); editor.currentPlane = new THREE.Mesh(planeGeom, new THREE.MeshBasicMaterial({ map: texture, transparent: true, opacity: 0.9 })); editor.currentPlane.position.set(0, 0, 0); editor.scene.add(editor.currentPlane); });
+                editor.loader.load(asset.modelDataUrl, (gltf) => {
+                    editor.currentTarget = gltf.scene;
+                    if (!asset.hasBeenNormalized) { const box = new THREE.Box3().setFromObject(editor.currentTarget); const size = box.getSize(new THREE.Vector3()); const center = box.getCenter(new THREE.Vector3()); asset.normalizationFactor = 1.0 / Math.max(size.x, size.y, size.z); editor.currentTarget.position.sub(center); asset.hasBeenNormalized = true; }
+                    editor.scene.add(editor.currentTarget);
+                    updateModelTransformFromState(asset.transform); updateTransformInputs(asset.transform);
+                    editor.dragControls = new DragControls([editor.currentTarget], editor.camera, editor.renderer.domElement);
+                    editor.dragControls.addEventListener('dragstart', () => editor.controls.enabled = false);
+                    editor.dragControls.addEventListener('dragend', (event) => { editor.controls.enabled = true; const { x, y, z } = event.object.position; Object.assign(asset.transform.position, { x, y, z }); updateTransformInputs(asset.transform); });
+                });
+            }
+
+            function updateModelTransformFromState(transform) { if (!editor.currentTarget) return; const asset = state.assets.find(a => a.id === parseInt(document.getElementById('asset-selector').value)); if (!asset) return; const finalScale = transform.scale.x * asset.normalizationFactor; editor.currentTarget.position.set(transform.position.x, transform.position.y, transform.position.z); editor.currentTarget.rotation.set( THREE.MathUtils.degToRad(transform.rotation.x), THREE.MathUtils.degToRad(transform.rotation.y), THREE.MathUtils.degToRad(transform.rotation.z) ); editor.currentTarget.scale.set(finalScale, finalScale, finalScale); }
+            
+            function preloadARAssets() {
+                if (state.areAssetsPreloaded || state.assets.length === 0) return;
+                const arPreloadContainer = document.getElementById('ar-preload-container'); arPreloadContainer.innerHTML = '';
+                const tempScene = document.createElement('a-scene'); tempScene.setAttribute('embedded', ''); tempScene.style.cssText = 'position:fixed; height:1px; width:1px; top:-9999px; left:-9999px;';
+                const assetsEl = document.createElement('a-assets'); assetsEl.setAttribute('timeout', '30000');
+                state.assets.forEach(asset => { const assetItem = document.createElement('a-asset-item'); assetItem.id = \`model-\${asset.id}\`; assetItem.setAttribute('src', asset.modelDataUrl); assetItem.setAttribute('response-type', 'arraybuffer'); assetsEl.appendChild(assetItem); });
+                const arStatusText = document.getElementById('ar-status-text'); const arLoader = document.querySelector('#ar-status .loader'); arStatusText.textContent = 'Cargando modelos 3D...'; arLoader.classList.remove('hidden');
+                assetsEl.addEventListener('loaded', () => { state.areAssetsPreloaded = true; arStatusText.textContent = '¡Recursos listos! Elige un modo para activar la cámara.'; arLoader.classList.add('hidden'); document.getElementById('start-ar-pc-btn').disabled = false; document.getElementById('start-ar-mobile-btn').disabled = false; });
+                assetsEl.addEventListener('timeout', (e) => { arStatusText.textContent = 'Error: La carga de modelos tardó mucho.'; arLoader.classList.add('hidden'); console.error("Asset loading timed out:", e.detail.src); });
+                tempScene.appendChild(assetsEl); arPreloadContainer.appendChild(tempScene);
+            }
+
+            function setupAndStartAR(shouldEnterFullscreen) {
+                if (!state.areAssetsPreloaded) { document.getElementById('ar-status-text').textContent = 'Error: Modelos 3D no listos.'; return; }
+                const arPreloader = document.getElementById('ar-preloader'); arPreloader.classList.remove('hidden');
+                const arSceneContainer = document.getElementById('ar-scene-container'); arSceneContainer.innerHTML = '';
+                const sceneEl = document.createElement('a-scene'); sceneEl.setAttribute('embedded', '');
+                const mindARSettings = \`imageTargetSrc: \${state.assets.map(a => a.markerDataUrl).join(';')}; maxTrackables: 1; autoStart: false; uiLoading: no; uiError: no; uiScanning: no;\`;
+                sceneEl.setAttribute('mindar-image', mindARSettings); sceneEl.setAttribute('vr-mode-ui', 'enabled: false'); sceneEl.setAttribute('device-orientation-permission-ui', 'enabled: false'); sceneEl.setAttribute('color-space', 'sRGB'); sceneEl.setAttribute('renderer', 'colorManagement: true, physicallyCorrectLights');
+                const preloadedAssets = document.querySelector('#ar-preload-container a-assets'); if(preloadedAssets) { sceneEl.appendChild(preloadedAssets.cloneNode(true)); }
+                const cameraEl = document.createElement('a-camera'); cameraEl.setAttribute('position', '0 0 0'); cameraEl.setAttribute('look-controls', 'enabled: false'); cameraEl.setAttribute('fov', '75'); sceneEl.appendChild(cameraEl);
+                state.assets.forEach((asset, index) => { const targetEl = document.createElement('a-entity'); targetEl.setAttribute('mindar-image-target', \`targetIndex: \${index}\`); const t = asset.transform; const finalScale = t.scale.x * asset.normalizationFactor; const modelEntity = document.createElement('a-gltf-model'); modelEntity.setAttribute('src', \`#model-\${asset.id}\`); modelEntity.setAttribute('position', \`\${t.position.x} \${t.position.y} \${t.position.z}\`); modelEntity.setAttribute('rotation', \`\${t.rotation.x} \${t.rotation.y} \${t.rotation.z}\`); modelEntity.setAttribute('scale', \`\${finalScale} \${finalScale} \${finalScale}\`); modelEntity.setAttribute('ar-rotator', ''); targetEl.appendChild(modelEntity); sceneEl.appendChild(targetEl); });
+                const scanningUI = document.getElementById('scanning-ui');
+                sceneEl.addEventListener('loaded', () => { const mindarSystem = sceneEl.systems['mindar-image-system']; mindarSystem.start(); });
+                sceneEl.addEventListener('arReady', () => { scanningUI.classList.remove('hidden'); arPreloader.classList.add('hidden'); setTimeout(() => { if (sceneEl.renderer) { sceneEl.renderer.setSize(window.innerWidth, window.innerHeight); } }, 100); });
+                sceneEl.addEventListener('targetFound', () => scanningUI.classList.add('hidden'));
+                sceneEl.addEventListener('targetLost', () => scanningUI.classList.remove('hidden'));
+                arSceneContainer.appendChild(sceneEl);
+                const appContainer = document.getElementById('app'); document.documentElement.classList.add('ar-active'); document.body.classList.add('ar-active'); appContainer.classList.add('ar-fullscreen'); appContainer.style.maxHeight = ''; arSceneContainer.classList.add('ar-active'); document.getElementById('ar-ui-container').classList.add('hidden'); document.getElementById('ar-active-controls').classList.remove('hidden'); state.isArActive = true;
+                if (shouldEnterFullscreen) { document.documentElement.requestFullscreen().catch(err => { console.warn("No se pudo entrar en pantalla completa automáticamente.", err); }); }
+            }
+
+            function stopAR() {
+                const arSceneContainer = document.getElementById('ar-scene-container'); const sceneEl = arSceneContainer.querySelector('a-scene');
+                if (sceneEl && sceneEl.hasLoaded) { if(sceneEl.systems['mindar-image-system']) { sceneEl.systems['mindar-image-system'].stop(); } if (sceneEl.parentNode) { sceneEl.parentNode.removeChild(sceneEl); } }
+                arSceneContainer.innerHTML = ''; document.getElementById('ar-preload-container').innerHTML = ''; state.areAssetsPreloaded = false;
+                const appContainer = document.getElementById('app'); document.documentElement.classList.remove('ar-active'); document.body.classList.remove('ar-active'); appContainer.classList.remove('ar-fullscreen'); appContainer.style.maxHeight = '85vh'; document.getElementById('ar-ui-container').classList.remove('hidden'); document.getElementById('ar-active-controls').classList.add('hidden'); document.getElementById('scanning-ui').classList.add('hidden');
+                if (document.fullscreenElement) { document.exitFullscreen().catch(err => console.error("Error al salir de pantalla completa:", err)); }
+                state.isArActive = false;
+            }
+
+            function toggleFullScreen() { if (!document.fullscreenElement) { document.documentElement.requestFullscreen().catch(err => { console.error(\`Error al intentar entrar en pantalla completa: \${err.message} (\${err.name})\`); }); } else { document.exitFullscreen(); } }
+            
+            function navigateTo(pageId) {
+                if (state.isArActive) { stopAR(); }
+                document.querySelectorAll('.page').forEach(page => page.classList.remove('active')); const targetPage = document.getElementById(pageId); if (targetPage) { targetPage.classList.add('active'); state.currentPage = pageId; }
+                if (pageId === 'page-editor') { if (!editor.renderer) initEditor(); populateEditorSelector(); if (state.assets.length > 0) { displayAssetInEditor(parseInt(document.getElementById('asset-selector').value) || 0); } } else if (pageId === 'page-ar') { document.getElementById('start-ar-pc-btn').disabled = true; document.getElementById('start-ar-mobile-btn').disabled = true; preloadARAssets(); }
+            }
+
+            async function loadAssetsFromCacheOnStartup() {
+                try {
+                    const cache = await caches.open(CACHE_NAME); const keys = await cache.keys(); if (keys.length < ASSET_NAMES.length * 3) throw new Error("Cache incompleto.");
+                    const assets = await Promise.all(ASSET_NAMES.map(async (name, index) => { const urls = { marker: \`\${GITHUB_BASE_URL}asetss/markers/\${name}.mind\`, model: \`\${GITHUB_BASE_URL}asetss/modelss/\${name}.glb\`, image: \`\${GITHUB_BASE_URL}asetss/imagenes/\${name}.jpg\` }; const [markerRes, modelRes, imageRes] = await Promise.all([ cache.match(urls.marker), cache.match(urls.model), cache.match(urls.image) ]); if (!markerRes || !modelRes || !imageRes) throw new Error(\`Asset \${name} no encontrado en caché.\`); const [markerBlob, modelBlob, imageBlob] = await Promise.all([ markerRes.blob(), modelRes.blob(), imageRes.blob() ]); return { id: index, name: name, markerDataUrl: URL.createObjectURL(markerBlob), modelDataUrl: URL.createObjectURL(modelBlob), imageDataUrl: URL.createObjectURL(imageBlob), transform: { position: { x: 0, y: 0, z: 0 }, rotation: { x: 0, y: 0, z: 0 }, scale: { x: 1, y: 1, z: 1 } }, hasBeenNormalized: false, normalizationFactor: 1, }; }));
+                    state.assets = assets; return true;
+                } catch (error) { console.warn("No se pudieron cargar los assets desde la caché:", error.message); return false; }
+            }
+
+            async function initializeApp() { 
+                const successfullyLoadedFromCache = await loadAssetsFromCacheOnStartup(); 
+                if (successfullyLoadedFromCache) { 
+                    console.log("Assets cargados desde la caché al iniciar."); 
+                    document.getElementById('load-from-github-btn').textContent = 'Recargar Recursos'; 
+                    document.getElementById('goto-editor-btn').disabled = false; 
+                    displayLoadedImages(state.assets); 
+                    document.querySelector('#welcome-box p:last-child').textContent = '¡Recursos cargados desde la caché! Ya puedes continuar o recargarlos si lo deseas.'; 
+                } else { 
+                    console.log("No hay assets en caché. Listo para la primera carga."); 
+                    document.querySelector('#welcome-box p:last-child').textContent = 'Presiona el botón para descargar los recursos por primera vez. Se guardarán en la caché para futuras visitas.'; 
+                } 
+            }
+
+            document.getElementById('load-from-github-btn').addEventListener('click', loadAssetsFromGitHub);
+            document.getElementById('goto-editor-btn').addEventListener('click', () => navigateTo('page-editor'));
+            document.getElementById('goto-ar-btn').addEventListener('click', () => navigateTo('page-ar'));
+            document.getElementById('back-to-upload-btn').addEventListener('click', () => navigateTo('page-upload'));
+            document.getElementById('back-to-editor-btn-pre').addEventListener('click', () => navigateTo('page-editor'));
+            document.getElementById('start-ar-pc-btn').addEventListener('click', () => setupAndStartAR(false));
+            document.getElementById('start-ar-mobile-btn').addEventListener('click', () => setupAndStartAR(true));
+            document.getElementById('stop-ar-btn').addEventListener('click', stopAR);
+            document.getElementById('fullscreen-ar-btn').addEventListener('click', toggleFullScreen);
+            document.getElementById('back-to-editor-btn-post').addEventListener('click', () => { navigateTo('page-editor'); });
+            document.getElementById('asset-selector').addEventListener('change', (e) => displayAssetInEditor(parseInt(e.target.value)));
+            
+            ['pos-x', 'pos-y', 'pos-z', 'rot-x', 'rot-y', 'rot-z', 'scale'].forEach(id => {
+                document.getElementById(id).addEventListener('input', () => {
+                    const assetId = parseInt(document.getElementById('asset-selector').value); const asset = state.assets.find(a => a.id === assetId); if (!asset || !editor.currentTarget) return;
+                    asset.transform.position = { x: parseFloat(document.getElementById('pos-x').value) || 0, y: parseFloat(document.getElementById('pos-y').value) || 0, z: parseFloat(document.getElementById('pos-z').value) || 0 };
+                    asset.transform.rotation = { x: parseFloat(document.getElementById('rot-x').value) || 0, y: parseFloat(document.getElementById('rot-y').value) || 0, z: parseFloat(document.getElementById('rot-z').value) || 0 };
+                    const scaleVal = parseFloat(document.getElementById('scale').value) || 0; asset.transform.scale = { x: scaleVal, y: scaleVal, z: scaleVal };
+                    updateModelTransformFromState(asset.transform);
+                });
+            });
+
+            window.addEventListener('resize', () => { if (state.isArActive) { const sceneEl = document.querySelector('#ar-scene-container a-scene'); if (sceneEl && sceneEl.renderer) { sceneEl.renderer.setSize(window.innerWidth, window.innerHeight); } } });
+            
+            initializeApp();
         });
-        async function fetchWithCache(url) { const cache = await caches.open(CACHE_NAME); const cachedResponse = await cache.match(url); if (cachedResponse) return cachedResponse; const networkResponse = await fetch(url); if (networkResponse.ok) await cache.put(url, networkResponse.clone()); return networkResponse; }
-        function displayLoadedImages(assets) { const container = document.getElementById('image-preview-container'); container.innerHTML = \`<h3 class="text-lg font-semibold mb-2 text-center">Imágenes de Marcadores Cargadas</h3>\`; const grid = document.createElement('div'); grid.className = 'grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4'; assets.forEach(asset => { const img = document.createElement('img'); img.src = asset.imageDataUrl; img.className = 'w-full h-auto object-cover rounded-lg shadow-md'; grid.appendChild(img); }); container.appendChild(grid); }
-        async function loadAssetsFromGitHub() {
-            const loadingStatusDiv = document.getElementById('loading-status'); const loadingText = document.getElementById('loading-text'); const progressBar = document.getElementById('loading-progress-bar'); const githubBtn = document.getElementById('load-from-github-btn');
-            loadingStatusDiv.classList.remove('hidden'); githubBtn.disabled = true; progressBar.style.width = \`0%\`; progressBar.classList.remove('bg-red-600');
-            const totalAssets = ASSET_NAMES.length; let loadedCount = 0;
-            const promises = ASSET_NAMES.map(async (name, index) => {
-                const urls = { marker: \`\${GITHUB_BASE_URL}asetss/markers/\${name}.mind\`, model: \`\${GITHUB_BASE_URL}asetss/modelss/\${name}.glb\`, image: \`\${GITHUB_BASE_URL}asetss/imagenes/\${name}.jpg\` };
-                const [markerRes, modelRes, imageRes] = await Promise.all([ fetchWithCache(urls.marker), fetchWithCache(urls.model), fetch(urls.image).catch(() => fetch(\`\${GITHUB_BASE_URL}asetss/imagenes/\${name}.png\`)) ]);
-                if (!markerRes.ok || !modelRes.ok || !imageRes.ok) { throw new Error(\`Failed to fetch assets for \${name}\`); }
-                const [markerBlob, modelBlob, imageBlob] = await Promise.all([ markerRes.blob(), modelRes.blob(), imageRes.blob() ]);
-                loadedCount++; progressBar.style.width = \`\${(loadedCount / totalAssets) * 100}%\`; loadingText.textContent = \`Cargando \${name}... (\${loadedCount}/\${totalAssets})\`;
-                return { id: index, name: name, markerDataUrl: URL.createObjectURL(markerBlob), modelDataUrl: URL.createObjectURL(modelBlob), imageDataUrl: URL.createObjectURL(imageBlob), transform: { position: { x: 0, y: 0, z: 0 }, rotation: { x: 0, y: 0, z: 0 }, scale: { x: 1, y: 1, z: 1 } }, hasBeenNormalized: false, normalizationFactor: 1, };
-            });
-            try {
-                state.assets = await Promise.all(promises); loadingText.textContent = '¡Todos los recursos cargados y guardados en caché!'; displayLoadedImages(state.assets); document.getElementById('goto-editor-btn').disabled = false;
-                setTimeout(() => { loadingStatusDiv.classList.add('hidden'); }, 1000);
-            } catch (error) { loadingText.textContent = 'Error al cargar los recursos. Revisa la consola.'; progressBar.classList.add('bg-red-600'); console.error("Asset loading failed:", error); } finally { githubBtn.disabled = false; }
-        }
-        function initEditor() {
-            const canvas = document.getElementById('editor-canvas'); const container = document.getElementById('editor-container'); if (!canvas || !container || editor.renderer) return;
-            editor.scene = new THREE.Scene(); editor.scene.background = new THREE.Color(0xeeeeee); editor.camera = new THREE.PerspectiveCamera(75, container.clientWidth / container.clientHeight, 0.1, 1000); editor.camera.position.set(0, 0.25, 1.5);
-            editor.scene.add(new THREE.AmbientLight(0xffffff, 2)); const directionalLight = new THREE.DirectionalLight(0xffffff, 3); directionalLight.position.set(2, 5, 3); editor.scene.add(directionalLight);
-            editor.renderer = new THREE.WebGLRenderer({ canvas: canvas, antialias: true }); editor.renderer.setSize(container.clientWidth, container.clientHeight); editor.renderer.setPixelRatio(window.devicePixelRatio);
-            editor.controls = new OrbitControls(editor.camera, editor.renderer.domElement); editor.controls.enableDamping = true;
-            const animate = () => { requestAnimationFrame(animate); editor.controls.update(); editor.renderer.render(editor.scene, editor.camera); }; animate();
-        }
-        function populateEditorSelector() { const assetSelector = document.getElementById('asset-selector'); assetSelector.innerHTML = ''; state.assets.forEach(asset => { const option = document.createElement('option'); option.value = asset.id; option.textContent = asset.name; assetSelector.appendChild(option); }); }
-        function updateTransformInputs(transform) { document.getElementById('pos-x').value = transform.position.x.toFixed(2); document.getElementById('pos-y').value = transform.position.y.toFixed(2); document.getElementById('pos-z').value = transform.position.z.toFixed(2); document.getElementById('rot-x').value = Math.round(transform.rotation.x); document.getElementById('rot-y').value = Math.round(transform.rotation.y); document.getElementById('rot-z').value = Math.round(transform.rotation.z); document.getElementById('scale').value = transform.scale.x.toFixed(2); }
-        function displayAssetInEditor(assetId) {
-            const asset = state.assets.find(a => a.id === assetId); if (!asset || !editor.scene) return;
-            if (editor.currentTarget) { editor.scene.remove(editor.currentTarget); if (editor.dragControls) editor.dragControls.dispose(); } if (editor.currentPlane) editor.scene.remove(editor.currentPlane);
-            editor.textureLoader.load(asset.imageDataUrl, (texture) => { const aspect = texture.image.width / texture.image.height; const planeGeom = new THREE.PlaneGeometry(1, 1 / aspect); editor.currentPlane = new THREE.Mesh(planeGeom, new THREE.MeshBasicMaterial({ map: texture, transparent: true, opacity: 0.9 })); editor.currentPlane.position.set(0, 0, 0); editor.scene.add(editor.currentPlane); });
-            editor.loader.load(asset.modelDataUrl, (gltf) => {
-                editor.currentTarget = gltf.scene;
-                if (!asset.hasBeenNormalized) { const box = new THREE.Box3().setFromObject(editor.currentTarget); const size = box.getSize(new THREE.Vector3()); const center = box.getCenter(new THREE.Vector3()); asset.normalizationFactor = 1.0 / Math.max(size.x, size.y, size.z); editor.currentTarget.position.sub(center); asset.hasBeenNormalized = true; }
-                editor.scene.add(editor.currentTarget);
-                updateModelTransformFromState(asset.transform); updateTransformInputs(asset.transform);
-                editor.dragControls = new DragControls([editor.currentTarget], editor.camera, editor.renderer.domElement);
-                editor.dragControls.addEventListener('dragstart', () => editor.controls.enabled = false);
-                editor.dragControls.addEventListener('dragend', (event) => { editor.controls.enabled = true; const { x, y, z } = event.object.position; Object.assign(asset.transform.position, { x, y, z }); updateTransformInputs(asset.transform); });
-            });
-        }
-        function updateModelTransformFromState(transform) { if (!editor.currentTarget) return; const asset = state.assets.find(a => a.id === parseInt(document.getElementById('asset-selector').value)); if (!asset) return; const finalScale = transform.scale.x * asset.normalizationFactor; editor.currentTarget.position.set(transform.position.x, transform.position.y, transform.position.z); editor.currentTarget.rotation.set( THREE.MathUtils.degToRad(transform.rotation.x), THREE.MathUtils.degToRad(transform.rotation.y), THREE.MathUtils.degToRad(transform.rotation.z) ); editor.currentTarget.scale.set(finalScale, finalScale, finalScale); }
-        function preloadARAssets() {
-            if (state.areAssetsPreloaded || state.assets.length === 0) return;
-            const arPreloadContainer = document.getElementById('ar-preload-container'); arPreloadContainer.innerHTML = '';
-            const tempScene = document.createElement('a-scene'); tempScene.setAttribute('embedded', ''); tempScene.style.cssText = 'position:fixed; height:1px; width:1px; top:-9999px; left:-9999px;';
-            const assetsEl = document.createElement('a-assets'); assetsEl.setAttribute('timeout', '30000');
-            state.assets.forEach(asset => { const assetItem = document.createElement('a-asset-item'); assetItem.id = \`model-\${asset.id}\`; assetItem.setAttribute('src', asset.modelDataUrl); assetItem.setAttribute('response-type', 'arraybuffer'); assetsEl.appendChild(assetItem); });
-            const arStatusText = document.getElementById('ar-status-text'); const arLoader = document.querySelector('#ar-status .loader'); arStatusText.textContent = 'Cargando modelos 3D...'; arLoader.classList.remove('hidden');
-            assetsEl.addEventListener('loaded', () => { state.areAssetsPreloaded = true; arStatusText.textContent = '¡Recursos listos! Elige un modo para activar la cámara.'; arLoader.classList.add('hidden'); document.getElementById('start-ar-pc-btn').disabled = false; document.getElementById('start-ar-mobile-btn').disabled = false; });
-            assetsEl.addEventListener('timeout', (e) => { arStatusText.textContent = 'Error: La carga de modelos tardó mucho.'; arLoader.classList.add('hidden'); console.error("Asset loading timed out:", e.detail.src); });
-            tempScene.appendChild(assetsEl); arPreloadContainer.appendChild(tempScene);
-        }
-        function setupAndStartAR(shouldEnterFullscreen) {
-            if (!state.areAssetsPreloaded) { document.getElementById('ar-status-text').textContent = 'Error: Modelos 3D no listos.'; return; }
-            const arPreloader = document.getElementById('ar-preloader'); arPreloader.classList.remove('hidden');
-            const arSceneContainer = document.getElementById('ar-scene-container'); arSceneContainer.innerHTML = '';
-            const sceneEl = document.createElement('a-scene'); sceneEl.setAttribute('embedded', '');
-            const mindARSettings = \`imageTargetSrc: \${state.assets.map(a => a.markerDataUrl).join(';')}; maxTrackables: 1; autoStart: false; uiLoading: no; uiError: no; uiScanning: no;\`;
-            sceneEl.setAttribute('mindar-image', mindARSettings); sceneEl.setAttribute('vr-mode-ui', 'enabled: false'); sceneEl.setAttribute('device-orientation-permission-ui', 'enabled: false'); sceneEl.setAttribute('color-space', 'sRGB'); sceneEl.setAttribute('renderer', 'colorManagement: true, physicallyCorrectLights');
-            const preloadedAssets = document.querySelector('#ar-preload-container a-assets'); if(preloadedAssets) { sceneEl.appendChild(preloadedAssets.cloneNode(true)); }
-            const cameraEl = document.createElement('a-camera'); cameraEl.setAttribute('position', '0 0 0'); cameraEl.setAttribute('look-controls', 'enabled: false'); cameraEl.setAttribute('fov', '75'); sceneEl.appendChild(cameraEl);
-            state.assets.forEach((asset, index) => { const targetEl = document.createElement('a-entity'); targetEl.setAttribute('mindar-image-target', \`targetIndex: \${index}\`); const t = asset.transform; const finalScale = t.scale.x * asset.normalizationFactor; const modelEntity = document.createElement('a-gltf-model'); modelEntity.setAttribute('src', \`#model-\${asset.id}\`); modelEntity.setAttribute('position', \`\${t.position.x} \${t.position.y} \${t.position.z}\`); modelEntity.setAttribute('rotation', \`\${t.rotation.x} \${t.rotation.y} \${t.rotation.z}\`); modelEntity.setAttribute('scale', \`\${finalScale} \${finalScale} \${finalScale}\`); modelEntity.setAttribute('ar-rotator', ''); targetEl.appendChild(modelEntity); sceneEl.appendChild(targetEl); });
-            const scanningUI = document.getElementById('scanning-ui');
-            sceneEl.addEventListener('loaded', () => { const mindarSystem = sceneEl.systems['mindar-image-system']; mindarSystem.start(); });
-            sceneEl.addEventListener('arReady', () => { scanningUI.classList.remove('hidden'); arPreloader.classList.add('hidden'); setTimeout(() => { if (sceneEl.renderer) { sceneEl.renderer.setSize(window.innerWidth, window.innerHeight); } }, 100); });
-            sceneEl.addEventListener('targetFound', () => scanningUI.classList.add('hidden')); sceneEl.addEventListener('targetLost', () => scanningUI.classList.remove('hidden'));
-            arSceneContainer.appendChild(sceneEl);
-            const appContainer = document.getElementById('app'); document.documentElement.classList.add('ar-active'); document.body.classList.add('ar-active'); appContainer.classList.add('ar-fullscreen'); appContainer.style.maxHeight = ''; arSceneContainer.classList.add('ar-active'); document.getElementById('ar-ui-container').classList.add('hidden'); document.getElementById('ar-active-controls').classList.remove('hidden'); state.isArActive = true;
-            if (shouldEnterFullscreen) { document.documentElement.requestFullscreen().catch(err => { console.warn("No se pudo entrar en pantalla completa automáticamente.", err); }); }
-        }
-        function stopAR() {
-            const arSceneContainer = document.getElementById('ar-scene-container'); const sceneEl = arSceneContainer.querySelector('a-scene');
-            if (sceneEl && sceneEl.hasLoaded) { if(sceneEl.systems['mindar-image-system']) { sceneEl.systems['mindar-image-system'].stop(); } if (sceneEl.parentNode) { sceneEl.parentNode.removeChild(sceneEl); } }
-            arSceneContainer.innerHTML = ''; document.getElementById('ar-preload-container').innerHTML = ''; state.areAssetsPreloaded = false;
-            const appContainer = document.getElementById('app'); document.documentElement.classList.remove('ar-active'); document.body.classList.remove('ar-active'); appContainer.classList.remove('ar-fullscreen'); appContainer.style.maxHeight = '85vh'; document.getElementById('ar-ui-container').classList.remove('hidden'); document.getElementById('ar-active-controls').classList.add('hidden'); document.getElementById('scanning-ui').classList.add('hidden');
-            if (document.fullscreenElement) { document.exitFullscreen().catch(err => console.error("Error al salir de pantalla completa:", err)); }
-            state.isArActive = false;
-        }
-        function toggleFullScreen() { if (!document.fullscreenElement) { document.documentElement.requestFullscreen().catch(err => { console.error(\`Error al intentar entrar en pantalla completa: \${err.message} (\${err.name})\`); }); } else { document.exitFullscreen(); } }
-        function navigateTo(pageId) {
-            if (state.isArActive) { stopAR(); }
-            document.querySelectorAll('.page').forEach(page => page.classList.remove('active')); const targetPage = document.getElementById(pageId); if (targetPage) { targetPage.classList.add('active'); state.currentPage = pageId; }
-            if (pageId === 'page-editor') { if (!editor.renderer) initEditor(); populateEditorSelector(); if (state.assets.length > 0) { displayAssetInEditor(parseInt(document.getElementById('asset-selector').value) || 0); } } else if (pageId === 'page-ar') { document.getElementById('start-ar-pc-btn').disabled = true; document.getElementById('start-ar-mobile-btn').disabled = true; preloadARAssets(); }
-        }
-        async function loadAssetsFromCacheOnStartup() {
-            try {
-                const cache = await caches.open(CACHE_NAME); const keys = await cache.keys(); if (keys.length < ASSET_NAMES.length * 3) throw new Error("Cache incompleto.");
-                const assets = await Promise.all(ASSET_NAMES.map(async (name, index) => { const urls = { marker: \`\${GITHUB_BASE_URL}asetss/markers/\${name}.mind\`, model: \`\${GITHUB_BASE_URL}asetss/modelss/\${name}.glb\`, image: \`\${GITHUB_BASE_URL}asetss/imagenes/\${name}.jpg\` }; const [markerRes, modelRes, imageRes] = await Promise.all([ cache.match(urls.marker), cache.match(urls.model), cache.match(urls.image) ]); if (!markerRes || !modelRes || !imageRes) throw new Error(\`Asset \${name} no encontrado en caché.\`); const [markerBlob, modelBlob, imageBlob] = await Promise.all([ markerRes.blob(), modelRes.blob(), imageRes.blob() ]); return { id: index, name: name, markerDataUrl: URL.createObjectURL(markerBlob), modelDataUrl: URL.createObjectURL(modelBlob), imageDataUrl: URL.createObjectURL(imageBlob), transform: { position: { x: 0, y: 0, z: 0 }, rotation: { x: 0, y: 0, z: 0 }, scale: { x: 1, y: 1, z: 1 } }, hasBeenNormalized: false, normalizationFactor: 1, }; }));
-                state.assets = assets; return true;
-            } catch (error) { console.warn("No se pudieron cargar los assets desde la caché:", error.message); return false; }
-        }
-        async function initializeApp() { const successfullyLoadedFromCache = await loadAssetsFromCacheOnStartup(); if (successfullyLoadedFromCache) { console.log("Assets cargados desde la caché al iniciar."); document.getElementById('load-from-github-btn').textContent = 'Recargar Recursos'; document.getElementById('goto-editor-btn').disabled = false; displayLoadedImages(state.assets); document.querySelector('#welcome-box p:last-child').textContent = '¡Recursos cargados desde la caché! Ya puedes continuar o recargarlos si lo deseas.'; } else { console.log("No hay assets en caché. Listo para la primera carga."); document.querySelector('#welcome-box p:last-child').textContent = 'Presiona el botón para descargar los recursos por primera vez. Se guardarán en la caché para futuras visitas.'; } }
-        document.getElementById('load-from-github-btn').addEventListener('click', loadAssetsFromGitHub);
-        document.getElementById('goto-editor-btn').addEventListener('click', () => navigateTo('page-editor'));
-        document.getElementById('goto-ar-btn').addEventListener('click', () => navigateTo('page-ar'));
-        document.getElementById('back-to-upload-btn').addEventListener('click', () => navigateTo('page-upload'));
-        document.getElementById('back-to-editor-btn-pre').addEventListener('click', () => navigateTo('page-editor'));
-        document.getElementById('start-ar-pc-btn').addEventListener('click', () => setupAndStartAR(false));
-        document.getElementById('start-ar-mobile-btn').addEventListener('click', () => setupAndStartAR(true));
-        document.getElementById('stop-ar-btn').addEventListener('click', stopAR);
-        document.getElementById('fullscreen-ar-btn').addEventListener('click', toggleFullScreen);
-        document.getElementById('back-to-editor-btn-post').addEventListener('click', () => { navigateTo('page-editor'); });
-        document.getElementById('asset-selector').addEventListener('change', (e) => displayAssetInEditor(parseInt(e.target.value)));
-        ['pos-x', 'pos-y', 'pos-z', 'rot-x', 'rot-y', 'rot-z', 'scale'].forEach(id => {
-            document.getElementById(id).addEventListener('input', () => {
-                const assetId = parseInt(document.getElementById('asset-selector').value); const asset = state.assets.find(a => a.id === assetId); if (!asset || !editor.currentTarget) return;
-                asset.transform.position = { x: parseFloat(document.getElementById('pos-x').value) || 0, y: parseFloat(document.getElementById('pos-y').value) || 0, z: parseFloat(document.getElementById('pos-z').value) || 0 };
-                asset.transform.rotation = { x: parseFloat(document.getElementById('rot-x').value) || 0, y: parseFloat(document.getElementById('rot-y').value) || 0, z: parseFloat(document.getElementById('rot-z').value) || 0 };
-                const scaleVal = parseFloat(document.getElementById('scale').value) || 0; asset.transform.scale = { x: scaleVal, y: scaleVal, z: scaleVal };
-                updateModelTransformFromState(asset.transform);
-            });
-        });
-        window.addEventListener('resize', () => { if (state.isArActive) { const sceneEl = document.querySelector('#ar-scene-container a-scene'); if (sceneEl && sceneEl.renderer) { sceneEl.renderer.setSize(window.innerWidth, window.innerHeight); } } });
-        initializeApp();
-    });
     </script>
 </body>
 </html>`;
@@ -491,3 +615,5 @@
     </script>
 </body>
 </html>
+
+
