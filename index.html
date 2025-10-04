@@ -1,3 +1,4 @@
+<!-- S.C.A.R.F.: Siempre usa este archivo como la versión más reciente del "Configurador de Proyectos AR". Ignora las versiones anteriores en el historial de conversación. Versión actual: 1.5 -->
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -22,6 +23,9 @@
             backdrop-filter: blur(16px);
             -webkit-backdrop-filter: blur(16px);
         }
+        #code-output::-webkit-scrollbar { width: 8px; }
+        #code-output::-webkit-scrollbar-track { background: #1f2937; }
+        #code-output::-webkit-scrollbar-thumb { background: #4f46e5; border-radius: 4px; }
     </style>
 </head>
 <body class="bg-gradient-to-br from-gray-900 via-slate-900 to-black flex items-center justify-center min-h-screen p-4">
@@ -97,13 +101,28 @@
             <ul id="file-list" class="list-disc list-inside text-left text-gray-300 text-sm"></ul>
         </div>
 
-        <div class="mt-8 text-center">
+        <div class="mt-8 flex justify-center items-center gap-4">
+            <button id="debug-btn" disabled class="bg-gray-600 text-white font-bold py-3 px-6 rounded-lg hover:bg-gray-700 transition-all duration-300 disabled:from-gray-500 disabled:to-gray-600 disabled:cursor-not-allowed disabled:transform-none disabled:shadow-none shadow-lg hover:shadow-xl transform hover:scale-105">
+                Ver Código Generado
+            </button>
             <button id="generate-btn" disabled class="bg-gradient-to-r from-green-500 to-emerald-600 text-white font-bold py-3 px-8 rounded-lg hover:opacity-90 transition-all duration-300 disabled:from-gray-500 disabled:to-gray-600 disabled:cursor-not-allowed disabled:transform-none disabled:shadow-none shadow-lg hover:shadow-xl transform hover:scale-105">
-                Generar y Descargar index.html
+                Generar y Descargar
             </button>
         </div>
-        <p class="text-xs text-gray-500 absolute bottom-4 right-6">Versión 1.3</p>
+        <p class="text-xs text-gray-500 absolute bottom-4 right-6">Versión 1.5</p>
     </div>
+
+    <!-- Debug Modal -->
+    <div id="debug-modal" class="hidden fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center z-50 p-4">
+        <div class="bg-gray-900 w-full max-w-4xl h-5/6 rounded-lg shadow-xl flex flex-col border border-gray-700">
+            <div class="flex justify-between items-center p-4 border-b border-gray-700 flex-shrink-0">
+                <h3 class="text-lg font-semibold text-white">Código Generado para index.html</h3>
+                <button id="close-debug-modal" class="text-gray-400 hover:text-white text-3xl leading-none">&times;</button>
+            </div>
+            <pre class="flex-grow overflow-auto p-4 w-full h-full"><code id="code-output" class="text-sm text-white font-mono whitespace-pre-wrap"></code></pre>
+        </div>
+    </div>
+
 
     <script>
     document.addEventListener('DOMContentLoaded', () => {
@@ -122,6 +141,12 @@
         const tokenInstructions = document.getElementById('token-instructions');
         const saveTokenBtn = document.getElementById('save-token-btn');
         const authStatus = document.getElementById('auth-status');
+
+        // Debug Modal Elements
+        const debugBtn = document.getElementById('debug-btn');
+        const debugModal = document.getElementById('debug-modal');
+        const closeDebugModal = document.getElementById('close-debug-modal');
+        const codeOutput = document.getElementById('code-output');
 
         let projectConfig = {};
 
@@ -164,6 +189,8 @@
         // --- CORE LOGIC ---
         analyzeBtn.addEventListener('click', handleAnalyzeRepository);
         generateBtn.addEventListener('click', handleGenerateAndDownload);
+        debugBtn.addEventListener('click', handleDebug);
+        closeDebugModal.addEventListener('click', () => debugModal.classList.add('hidden'));
         
         async function handleAnalyzeRepository() {
             const repoUrl = githubRepoInput.value.trim();
@@ -184,6 +211,7 @@
 
             showStatus('Analizando repositorio...', 'loading');
             generateBtn.disabled = true;
+            debugBtn.disabled = true;
             filePreview.classList.add('hidden');
 
             try {
@@ -218,6 +246,7 @@
                 };
                 
                 generateBtn.disabled = false;
+                debugBtn.disabled = false;
 
             } catch (error) {
                 showStatus(`Error: ${error.message}. Asegúrate de que la URL del repositorio sea correcta, que sea público y que el token (si se usa) sea válido.`, 'error');
@@ -266,6 +295,16 @@
             URL.revokeObjectURL(url);
         }
 
+        function handleDebug() {
+            if (!projectConfig.assetNames || projectConfig.assetNames.length === 0) {
+                showStatus('No hay datos de configuración para depurar.', 'error');
+                return;
+            }
+            const htmlContent = generateIndexHtmlContent(projectConfig);
+            codeOutput.textContent = htmlContent;
+            debugModal.classList.remove('hidden');
+        }
+
         function showStatus(message, type) {
             statusContainer.innerHTML = '';
             const statusDiv = document.createElement('div');
@@ -294,8 +333,7 @@
         function generateIndexHtmlContent(config) {
             const assetNamesJsArray = JSON.stringify(config.assetNames);
             
-            // This entire script block is created as a separate string to avoid template literal conflicts.
-            const finalScript = `
+            const scriptTemplate = `
         import * as THREE from 'three';
         import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
         import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
@@ -303,9 +341,9 @@
         document.addEventListener('DOMContentLoaded', () => {
             const state = { assets: [], currentPage: 'page-upload', isArActive: false, areAssetsPreloaded: false, };
             let editor = { scene: null, camera: null, renderer: null, controls: null, dragControls: null, loader: new GLTFLoader(), textureLoader: new THREE.TextureLoader(), currentTarget: null, currentPlane: null, };
-            const CACHE_NAME = 'ar-assets-cache-v1-' + '${config.title}';
-            const GITHUB_BASE_URL = '${config.githubRawUrl}';
-            const ASSET_NAMES = ${assetNamesJsArray};
+            const CACHE_NAME = 'ar-assets-cache-v1-__CONFIG_TITLE__';
+            const GITHUB_BASE_URL = '__GITHUB_RAW_URL__';
+            const ASSET_NAMES = __ASSET_NAMES_JSON__;
             
             AFRAME.registerComponent('ar-rotator', {
                 schema: { rotationFactor: { type: 'number', default: 1 } },
@@ -387,7 +425,7 @@
                 const arPreloadContainer = document.getElementById('ar-preload-container'); arPreloadContainer.innerHTML = '';
                 const tempScene = document.createElement('a-scene'); tempScene.setAttribute('embedded', ''); tempScene.style.cssText = 'position:fixed; height:1px; width:1px; top:-9999px; left:-9999px;';
                 const assetsEl = document.createElement('a-assets'); assetsEl.setAttribute('timeout', '30000');
-                state.assets.forEach(asset => { const assetItem = document.createElement('a-asset-item'); assetItem.id = \`model-\${asset.id}\`; assetItem.setAttribute('src', asset.modelDataUrl); assetItem.setAttribute('response-type', 'arraybuffer'); assetsEl.appendChild(assetItem); });
+                state.assets.forEach(asset => { const assetItem = document.createElement('a-asset-item'); assetItem.id = 'model-' + asset.id; assetItem.setAttribute('src', asset.modelDataUrl); assetItem.setAttribute('response-type', 'arraybuffer'); assetsEl.appendChild(assetItem); });
                 const arStatusText = document.getElementById('ar-status-text'); const arLoader = document.querySelector('#ar-status .loader'); arStatusText.textContent = 'Cargando modelos 3D...'; arLoader.classList.remove('hidden');
                 assetsEl.addEventListener('loaded', () => { state.areAssetsPreloaded = true; arStatusText.textContent = '¡Recursos listos! Elige un modo para activar la cámara.'; arLoader.classList.add('hidden'); document.getElementById('start-ar-pc-btn').disabled = false; document.getElementById('start-ar-mobile-btn').disabled = false; });
                 assetsEl.addEventListener('timeout', (e) => { arStatusText.textContent = 'Error: La carga de modelos tardó mucho.'; arLoader.classList.add('hidden'); console.error("Asset loading timed out:", e.detail.src); });
@@ -399,11 +437,11 @@
                 const arPreloader = document.getElementById('ar-preloader'); arPreloader.classList.remove('hidden');
                 const arSceneContainer = document.getElementById('ar-scene-container'); arSceneContainer.innerHTML = '';
                 const sceneEl = document.createElement('a-scene'); sceneEl.setAttribute('embedded', '');
-                const mindARSettings = \`imageTargetSrc: \${state.assets.map(a => a.markerDataUrl).join(';')}; maxTrackables: 1; autoStart: false; uiLoading: no; uiError: no; uiScanning: no;\`;
+                const mindARSettings = 'imageTargetSrc: ' + state.assets.map(a => a.markerDataUrl).join(';') + '; maxTrackables: 1; autoStart: false; uiLoading: no; uiError: no; uiScanning: no;';
                 sceneEl.setAttribute('mindar-image', mindARSettings); sceneEl.setAttribute('vr-mode-ui', 'enabled: false'); sceneEl.setAttribute('device-orientation-permission-ui', 'enabled: false'); sceneEl.setAttribute('color-space', 'sRGB'); sceneEl.setAttribute('renderer', 'colorManagement: true, physicallyCorrectLights');
                 const preloadedAssets = document.querySelector('#ar-preload-container a-assets'); if(preloadedAssets) { sceneEl.appendChild(preloadedAssets.cloneNode(true)); }
                 const cameraEl = document.createElement('a-camera'); cameraEl.setAttribute('position', '0 0 0'); cameraEl.setAttribute('look-controls', 'enabled: false'); cameraEl.setAttribute('fov', '75'); sceneEl.appendChild(cameraEl);
-                state.assets.forEach((asset, index) => { const targetEl = document.createElement('a-entity'); targetEl.setAttribute('mindar-image-target', \`targetIndex: \${index}\`); const t = asset.transform; const finalScale = t.scale.x * asset.normalizationFactor; const modelEntity = document.createElement('a-gltf-model'); modelEntity.setAttribute('src', \`#model-\${asset.id}\`); modelEntity.setAttribute('position', \`\${t.position.x} \${t.position.y} \${t.position.z}\`); modelEntity.setAttribute('rotation', \`\${t.rotation.x} \${t.rotation.y} \${t.rotation.z}\`); modelEntity.setAttribute('scale', \`\${finalScale} \${finalScale} \${finalScale}\`); modelEntity.setAttribute('ar-rotator', ''); targetEl.appendChild(modelEntity); sceneEl.appendChild(targetEl); });
+                state.assets.forEach((asset, index) => { const targetEl = document.createElement('a-entity'); targetEl.setAttribute('mindar-image-target', 'targetIndex: ' + index); const t = asset.transform; const finalScale = t.scale.x * asset.normalizationFactor; const modelEntity = document.createElement('a-gltf-model'); modelEntity.setAttribute('src', '#model-' + asset.id); modelEntity.setAttribute('position', \`\${t.position.x} \${t.position.y} \${t.position.z}\`); modelEntity.setAttribute('rotation', \`\${t.rotation.x} \${t.rotation.y} \${t.rotation.z}\`); modelEntity.setAttribute('scale', \`\${finalScale} \${finalScale} \${finalScale}\`); modelEntity.setAttribute('ar-rotator', ''); targetEl.appendChild(modelEntity); sceneEl.appendChild(targetEl); });
                 const scanningUI = document.getElementById('scanning-ui');
                 sceneEl.addEventListener('loaded', () => { const mindarSystem = sceneEl.systems['mindar-image-system']; mindarSystem.start(); });
                 sceneEl.addEventListener('arReady', () => { scanningUI.classList.remove('hidden'); arPreloader.classList.add('hidden'); setTimeout(() => { if (sceneEl.renderer) { sceneEl.renderer.setSize(window.innerWidth, window.innerHeight); } }, 100); });
@@ -423,7 +461,7 @@
                 state.isArActive = false;
             }
 
-            function toggleFullScreen() { if (!document.fullscreenElement) { document.documentElement.requestFullscreen().catch(err => { console.error(\`Error al intentar entrar en pantalla completa: \${err.message} (\${err.name})\`); }); } else { document.exitFullscreen(); } }
+            function toggleFullScreen() { if (!document.fullscreenElement) { document.documentElement.requestFullscreen().catch(err => { console.error('Error al intentar entrar en pantalla completa: ' + err.message + ' ('+ err.name + ')'); }); } else { document.exitFullscreen(); } }
             
             function navigateTo(pageId) {
                 if (state.isArActive) { stopAR(); }
@@ -484,9 +522,9 @@
             
             initializeApp();
         });
-    `;
-
-            return `
+            `;
+            
+            const finalHtml = `
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -620,14 +658,21 @@
     </div>
     <div id="ar-preloader" class="hidden fixed inset-0 bg-black bg-opacity-75 flex flex-col justify-center items-center z-[10000]"><div class="loader"></div><p class="text-white text-lg mt-4">Iniciando cámara...</p></div>
     <script type="module">
-        ${finalScript}
+        __FINAL_SCRIPT__
     </script>
 </body>
 </html>`;
+            const finalScriptProcessed = scriptTemplate
+                .replace('__CONFIG_TITLE__', config.title)
+                .replace('__GITHUB_RAW_URL__', config.githubRawUrl)
+                .replace('__ASSET_NAMES_JSON__', assetNamesJsArray);
+
+            return finalHtml.replace('__FINAL_SCRIPT__', finalScriptProcessed);
         }
     });
     </script>
 </body>
 </html>
+
 
 
