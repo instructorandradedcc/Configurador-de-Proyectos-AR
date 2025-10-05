@@ -1,4 +1,4 @@
-<!-- S.C.A.R.F.: Siempre usa este archivo como la versión más reciente del "Configurador de Proyectos AR". Ignora las versiones anteriores en el historial de conversación. Versión actual: 1.6 -->
+<!-- S.C.A.R.F.: Siempre usa este archivo como la versión más reciente del "Configurador de Proyectos AR". Ignora las versiones anteriores en el historial de conversación. Versión actual: 1.9 -->
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -86,6 +86,25 @@
                     <input type="url" id="logo-url" class="w-full p-2 bg-gray-800/50 border border-gray-600 text-white rounded-md shadow-sm focus:ring-2 focus:ring-indigo-400 focus:border-indigo-400 transition" placeholder="https://.../logo.jpg">
                 </div>
             </div>
+            
+            <!-- NUEVO: Campos para rutas personalizadas -->
+            <div class="border-t border-white/10 pt-6">
+                <h3 class="text-lg font-semibold text-gray-200 mb-3">Configuración Avanzada (Opcional)</h3>
+                <div class="space-y-4">
+                    <div>
+                        <label for="models-path" class="block text-sm font-medium text-gray-300 mb-1">Ruta de Modelos 3D (.glb)</label>
+                        <input type="text" id="models-path" class="w-full p-2 bg-gray-800/50 border border-gray-600 text-white rounded-md shadow-sm focus:ring-2 focus:ring-indigo-400 focus:border-indigo-400 transition" placeholder="assets/models">
+                    </div>
+                    <div>
+                        <label for="markers-path" class="block text-sm font-medium text-gray-300 mb-1">Ruta de Marcadores (.mind)</label>
+                        <input type="text" id="markers-path" class="w-full p-2 bg-gray-800/50 border border-gray-600 text-white rounded-md shadow-sm focus:ring-2 focus:ring-indigo-400 focus:border-indigo-400 transition" placeholder="assets/markers">
+                    </div>
+                    <div>
+                        <label for="images-path" class="block text-sm font-medium text-gray-300 mb-1">Ruta de Imágenes (.jpg, .png)</label>
+                        <input type="text" id="images-path" class="w-full p-2 bg-gray-800/50 border border-gray-600 text-white rounded-md shadow-sm focus:ring-2 focus:ring-indigo-400 focus:border-indigo-400 transition" placeholder="assets/images">
+                    </div>
+                </div>
+            </div>
         </div>
 
         <div class="mt-8 text-center">
@@ -109,7 +128,7 @@
                 Generar y Descargar
             </button>
         </div>
-        <p class="text-xs text-gray-500 absolute bottom-4 right-6">Versión 1.6</p>
+        <p class="text-xs text-gray-500 absolute bottom-4 right-6">Versión 1.9</p>
     </div>
 
     <!-- Debug Modal -->
@@ -126,6 +145,7 @@
 
     <script>
     document.addEventListener('DOMContentLoaded', () => {
+        // --- SELECCIÓN DE ELEMENTOS DEL DOM ---
         const githubRepoInput = document.getElementById('github-repo');
         const githubTokenInput = document.getElementById('github-token');
         const projectTitleInput = document.getElementById('project-title');
@@ -135,6 +155,11 @@
         const statusContainer = document.getElementById('status-container');
         const filePreview = document.getElementById('file-preview');
         const fileList = document.getElementById('file-list');
+        
+        // NUEVO: Inputs para rutas personalizadas
+        const modelsPathInput = document.getElementById('models-path');
+        const markersPathInput = document.getElementById('markers-path');
+        const imagesPathInput = document.getElementById('images-path');
         
         const connectGithubBtn = document.getElementById('connect-github-btn');
         const tokenInstructions = document.getElementById('token-instructions');
@@ -148,6 +173,7 @@
 
         let projectConfig = {};
 
+        // --- LÓGICA DE AUTENTICACIÓN DE GITHUB ---
         function updateAuthUI() {
             const token = sessionStorage.getItem('github_token');
             if (token) {
@@ -183,6 +209,7 @@
         
         updateAuthUI();
 
+        // --- EVENT LISTENERS PRINCIPALES ---
         analyzeBtn.addEventListener('click', handleAnalyzeRepository);
         generateBtn.addEventListener('click', handleGenerateAndDownload);
         debugBtn.addEventListener('click', handleDebug);
@@ -211,7 +238,13 @@
             filePreview.classList.add('hidden');
 
             try {
-                const paths = { models: 'asetss/modelss', markers: 'asetss/markers', images: 'asetss/imagenes' };
+                // MODIFICADO: Usa las rutas de los inputs, o los valores por defecto si están vacíos.
+                const paths = { 
+                    models: modelsPathInput.value.trim() || 'assets/models', 
+                    markers: markersPathInput.value.trim() || 'assets/markers', 
+                    images: imagesPathInput.value.trim() || 'assets/images' 
+                };
+
                 const modelFiles = await getFileNamesFromRepo(owner, repo, paths.models, ['.glb'], token);
                 const markerFiles = await getFileNamesFromRepo(owner, repo, paths.markers, ['.mind'], token);
                 const imageFiles = await getFileNamesFromRepo(owner, repo, paths.images, ['.jpg', '.png'], token);
@@ -219,7 +252,7 @@
                 const commonAssets = modelFiles.filter(modelName => markerFiles.includes(modelName) && imageFiles.includes(modelName));
 
                 if (commonAssets.length === 0) {
-                    throw new Error('No se encontraron conjuntos de archivos completos (modelo, marcador e imagen con el mismo nombre). Revisa la estructura de carpetas y los nombres de archivo.');
+                    throw new Error('No se encontraron conjuntos de archivos completos (modelo, marcador e imagen con el mismo nombre). Revisa las rutas y los nombres de archivo.');
                 }
                 
                 showStatus(`¡Éxito! Se encontraron ${commonAssets.length} assets completos.`, 'success');
@@ -231,14 +264,16 @@
                     title: projectTitleInput.value || 'Proyecto AR',
                     logoUrl: logoUrlInput.value || 'https://placehold.co/120x80/e2e8f0/94a3b8?text=Logo',
                     githubRawUrl: `https://raw.githubusercontent.com/${owner}/${repo}/main/`,
-                    assetNames: commonAssets
+                    assetNames: commonAssets,
+                    // NUEVO: Guarda las rutas para usarlas en el archivo generado
+                    paths: paths
                 };
                 
                 generateBtn.disabled = false;
                 debugBtn.disabled = false;
 
             } catch (error) {
-                showStatus(`Error: ${error.message}. Asegúrate de que la URL del repositorio sea correcta, que sea público y que el token (si se usa) sea válido.`, 'error');
+                showStatus(`Error: ${error.message}. Asegúrate de que la URL del repo y las rutas a las carpetas sean correctas.`, 'error');
                 console.error('Error fetching from GitHub:', error);
             }
         }
@@ -302,7 +337,7 @@
                 statusDiv.className = baseClasses + 'bg-red-900/50 border border-red-500/50 text-red-300';
             } else if (type === 'success') {
                 statusDiv.className = baseClasses + 'bg-green-900/50 border border-green-500/50 text-green-300';
-            } else { 
+            } else { // 'loading'
                 statusDiv.className = baseClasses + 'bg-blue-900/50 border border-blue-500/50 text-blue-300 flex items-center justify-center gap-2';
             }
             
@@ -329,6 +364,8 @@
             const CACHE_NAME = 'ar-assets-cache-v1-${config.title.replace(/[^a-z0-9]/gi, '-')}';
             const GITHUB_BASE_URL = '${config.githubRawUrl}';
             const ASSET_NAMES = ${JSON.stringify(config.assetNames)};
+            // NUEVO: Se usan las rutas guardadas en la configuración
+            const PATHS = ${JSON.stringify(config.paths)};
             
             AFRAME.registerComponent('ar-rotator', {
                 schema: { rotationFactor: { type: 'number', default: 1 } },
@@ -359,12 +396,13 @@
                 loadingStatusDiv.classList.remove('hidden'); githubBtn.disabled = true; progressBar.style.width = '0%'; progressBar.classList.remove('bg-red-600');
                 const totalAssets = ASSET_NAMES.length; let loadedCount = 0;
                 const promises = ASSET_NAMES.map(async (name, index) => {
+                    // MODIFICADO: Usa las rutas dinámicas de la variable PATHS
                     const urls = { 
-                        marker: GITHUB_BASE_URL + 'asetss/markers/' + name + '.mind', 
-                        model: GITHUB_BASE_URL + 'asetss/modelss/' + name + '.glb', 
-                        image: GITHUB_BASE_URL + 'asetss/imagenes/' + name + '.jpg' 
+                        marker: GITHUB_BASE_URL + PATHS.markers + '/' + name + '.mind', 
+                        model: GITHUB_BASE_URL + PATHS.models + '/' + name + '.glb', 
+                        image: GITHUB_BASE_URL + PATHS.images + '/' + name + '.jpg' 
                     };
-                    const [markerRes, modelRes, imageRes] = await Promise.all([ fetchWithCache(urls.marker), fetchWithCache(urls.model), fetch(urls.image).catch(() => fetch(GITHUB_BASE_URL + 'asetss/imagenes/' + name + '.png')) ]);
+                    const [markerRes, modelRes, imageRes] = await Promise.all([ fetchWithCache(urls.marker), fetchWithCache(urls.model), fetch(urls.image).catch(() => fetch(GITHUB_BASE_URL + PATHS.images + '/' + name + '.png')) ]);
                     if (!markerRes.ok || !modelRes.ok || !imageRes.ok) { throw new Error('Failed to fetch assets for ' + name); }
                     const [markerBlob, modelBlob, imageBlob] = await Promise.all([ markerRes.blob(), modelRes.blob(), imageRes.blob() ]);
                     loadedCount++; progressBar.style.width = \`\${(loadedCount / totalAssets) * 100}%\`; loadingText.textContent = \`Cargando \${name}... (\${loadedCount}/\${totalAssets})\`;
@@ -461,8 +499,13 @@
                     if (keys.length === 0) throw new Error("Cache vacío.");
 
                     const assets = await Promise.all(ASSET_NAMES.map(async (name, index) => {
-                        const urls = { marker: GITHUB_BASE_URL + 'asetss/markers/' + name + '.mind', model: GITHUB_BASE_URL + 'asetss/modelss/' + name + '.glb', image: GITHUB_BASE_URL + 'asetss/imagenes/' + name + '.jpg' };
-                        const [markerRes, modelRes, imageRes] = await Promise.all([ cache.match(urls.marker), cache.match(urls.model), cache.match(urls.image).catch(()=>cache.match(GITHUB_BASE_URL + 'asetss/imagenes/' + name + '.png')) ]);
+                        // MODIFICADO: Usa las rutas dinámicas para buscar en la caché.
+                        const urls = { 
+                            marker: GITHUB_BASE_URL + PATHS.markers + '/' + name + '.mind', 
+                            model: GITHUB_BASE_URL + PATHS.models + '/' + name + '.glb', 
+                            image: GITHUB_BASE_URL + PATHS.images + '/' + name + '.jpg' 
+                        };
+                        const [markerRes, modelRes, imageRes] = await Promise.all([ cache.match(urls.marker), cache.match(urls.model), cache.match(urls.image).catch(()=>cache.match(GITHUB_BASE_URL + PATHS.images + '/' + name + '.png')) ]);
                         if (!markerRes || !modelRes || !imageRes) throw new Error('Asset ' + name + ' no encontrado en caché.');
                         const [markerBlob, modelBlob, imageBlob] = await Promise.all([ markerRes.blob(), modelRes.blob(), imageRes.blob() ]);
                         return { id: index, name: name, markerDataUrl: URL.createObjectURL(markerBlob), modelDataUrl: URL.createObjectURL(modelBlob), imageDataUrl: URL.createObjectURL(imageBlob), transform: { position: { x: 0, y: 0, z: 0 }, rotation: { x: 0, y: 0, z: 0 }, scale: { x: 1, y: 1, z: 1 } }, hasBeenNormalized: false, normalizationFactor: 1, };
@@ -473,7 +516,6 @@
                     document.getElementById('goto-editor-btn').disabled = false; 
                     displayLoadedImages(state.assets); 
                     document.querySelector('#welcome-box p:last-child').textContent = '¡Recursos cargados desde la caché! Ya puedes continuar o recargarlos si lo deseas.'; 
-
                 } catch (error) {
                      console.warn("No se pudieron cargar los assets desde la caché:", error.message); 
                      console.log("No hay assets en caché. Listo para la primera carga."); 
@@ -508,14 +550,14 @@
             initializeApp();
         });
             `;
-            
-            const finalHtml = \`
+
+            return `
 <!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>\${config.title}</title>
+    <title>${config.title}</title>
     <script src="https://cdn.tailwindcss.com/"></script>
     <script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image-aframe.prod.js"></script>
@@ -550,13 +592,13 @@
 <body class="bg-gray-200 text-gray-800 font-sans">
     <div id="app" class="app-container w-full h-full bg-white">
         <div class="flex justify-center items-center p-4 border-b">
-             <img src="\${config.logoUrl}" alt="Logo" class="h-16 w-auto mr-4" onerror="this.onerror=null;this.src='https://placehold.co/120x80/e2e8f0/94a3b8?text=Logo';">
+             <img src="${config.logoUrl}" alt="Logo" class="h-16 w-auto mr-4" onerror="this.onerror=null;this.src='https://placehold.co/120x80/e2e8f0/94a3b8?text=Logo';">
              <div>
-                 <h1 class="text-3xl font-bold text-center" style="color: #166534;">\${config.title}</h1>
+                 <h1 class="text-3xl font-bold text-center" style="color: #166534;">${config.title}</h1>
                  <p class="text-center text-gray-500">Aprendizaje con Realidad Aumentada.</p>
              </div>
         </div>
-        <div class="overflow-y-auto h-[calc(100%-96px)]">
+        <div class="overflow-y-auto h-[calc(100%-80px)]">
             <!-- PÁGINA 1: Carga de Recursos -->
             <div id="page-upload" class="page active p-6">
                 <h2 class="text-2xl font-semibold mb-4 border-b pb-2">Paso 1: Cargar Recursos</h2>
@@ -645,16 +687,16 @@
     </div>
     <div id="ar-preloader" class="hidden fixed inset-0 bg-black bg-opacity-75 flex flex-col justify-center items-center z-[10000]"><div class="loader"></div><p class="text-white text-lg mt-4">Iniciando cámara...</p></div>
     <script type="module">
-        \${finalScript}
+        ${finalScript}
     </script>
 </body>
-</html>\`;
-            return finalHtml;
+</html>`;
         }
     });
     </script>
 </body>
 </html>
+
 
 
 
