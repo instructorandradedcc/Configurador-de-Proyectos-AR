@@ -26,11 +26,26 @@
         #code-output::-webkit-scrollbar { width: 8px; }
         #code-output::-webkit-scrollbar-track { background: #1f2937; }
         #code-output::-webkit-scrollbar-thumb { background: #4f46e5; border-radius: 4px; }
+        /* Estilos para la barra de desplazamiento del contenedor principal */
+        .container::-webkit-scrollbar {
+            width: 8px;
+        }
+        .container::-webkit-scrollbar-track {
+            background: rgba(17, 24, 39, 0.5); /* Color de fondo del card */
+            border-radius: 4px;
+        }
+        .container::-webkit-scrollbar-thumb {
+            background: #4f46e5; /* Indigo-600 */
+            border-radius: 4px;
+        }
+        .container::-webkit-scrollbar-thumb:hover {
+            background: #6366f1; /* Indigo-500 */
+        }
     </style>
 </head>
 <body class="bg-gradient-to-br from-gray-900 via-slate-900 to-black flex items-center justify-center min-h-screen p-4">
 
-    <div class="container mx-auto p-8 max-w-2xl card-bg-dark rounded-2xl shadow-2xl border border-white/10 relative">
+    <div class="container mx-auto p-8 max-w-2xl card-bg-dark rounded-2xl shadow-2xl border border-white/10 relative max-h-[95vh] overflow-y-auto">
         <div class="text-center mb-8">
             <h1 class="text-4xl font-bold text-gray-100">Configurador de Proyectos AR</h1>
             <p class="text-gray-400 mt-2">Genera tu archivo <code class="bg-gray-700 text-gray-300 text-sm px-1.5 py-0.5 rounded">index.html</code> personalizado para cada libro.</p>
