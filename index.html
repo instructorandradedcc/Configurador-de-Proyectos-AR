@@ -1,4 +1,4 @@
-<!-- S.C.A.R.F.: Siempre usa este archivo como la versión más reciente del "Configurador de Proyectos AR". Ignora las versiones anteriores en el historial de conversación. Versión actual: 1.9 -->
+<!-- S.C.A.R.F.: Siempre usa este archivo como la versión más reciente del "Configurador de Proyectos AR". Ignora las versiones anteriores en el historial de conversación. Versión actual: 2.1 -->
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -102,21 +102,24 @@
                 </div>
             </div>
             
-            <!-- NUEVO: Campos para rutas personalizadas -->
+            <!-- Campos para rutas personalizadas con ayuda -->
             <div class="border-t border-white/10 pt-6">
-                <h3 class="text-lg font-semibold text-gray-200 mb-3">Configuración Avanzada (Opcional)</h3>
+                <h3 class="text-lg font-semibold text-gray-200 mb-3">Configuración Avanzada (Rutas de Carpetas)</h3>
                 <div class="space-y-4">
                     <div>
                         <label for="models-path" class="block text-sm font-medium text-gray-300 mb-1">Ruta de Modelos 3D (.glb)</label>
-                        <input type="text" id="models-path" class="w-full p-2 bg-gray-800/50 border border-gray-600 text-white rounded-md shadow-sm focus:ring-2 focus:ring-indigo-400 focus:border-indigo-400 transition" placeholder="assets/models">
+                        <input type="text" id="models-path" class="w-full p-2 bg-gray-800/50 border border-gray-600 text-white rounded-md shadow-sm focus:ring-2 focus:ring-indigo-400 focus:border-indigo-400 transition" placeholder="https://github.com/usuario/repo/tree/main/asetss/modelss">
+                        <p class="mt-1 text-xs text-gray-400">Pega la URL completa de la carpeta o solo la ruta relativa (ej. `asetss/modelss`).</p>
                     </div>
                     <div>
                         <label for="markers-path" class="block text-sm font-medium text-gray-300 mb-1">Ruta de Marcadores (.mind)</label>
-                        <input type="text" id="markers-path" class="w-full p-2 bg-gray-800/50 border border-gray-600 text-white rounded-md shadow-sm focus:ring-2 focus:ring-indigo-400 focus:border-indigo-400 transition" placeholder="assets/markers">
+                        <input type="text" id="markers-path" class="w-full p-2 bg-gray-800/50 border border-gray-600 text-white rounded-md shadow-sm focus:ring-2 focus:ring-indigo-400 focus:border-indigo-400 transition" placeholder="https://github.com/usuario/repo/tree/main/asetss/markers">
+                        <p class="mt-1 text-xs text-gray-400">Pega la URL completa de la carpeta o solo la ruta relativa.</p>
                     </div>
                     <div>
                         <label for="images-path" class="block text-sm font-medium text-gray-300 mb-1">Ruta de Imágenes (.jpg, .png)</label>
-                        <input type="text" id="images-path" class="w-full p-2 bg-gray-800/50 border border-gray-600 text-white rounded-md shadow-sm focus:ring-2 focus:ring-indigo-400 focus:border-indigo-400 transition" placeholder="assets/images">
+                        <input type="text" id="images-path" class="w-full p-2 bg-gray-800/50 border border-gray-600 text-white rounded-md shadow-sm focus:ring-2 focus:ring-indigo-400 focus:border-indigo-400 transition" placeholder="https://github.com/usuario/repo/tree/main/asetss/imagenes">
+                         <p class="mt-1 text-xs text-gray-400">Pega la URL completa de la carpeta o solo la ruta relativa.</p>
                     </div>
                 </div>
             </div>
@@ -143,7 +146,7 @@
                 Generar y Descargar
             </button>
         </div>
-        <p class="text-xs text-gray-500 absolute bottom-4 right-6">Versión 1.9</p>
+        <p class="text-xs text-gray-500 absolute bottom-4 right-6">Versión 2.1</p>
     </div>
 
     <!-- Debug Modal -->
@@ -171,7 +174,6 @@
         const filePreview = document.getElementById('file-preview');
         const fileList = document.getElementById('file-list');
         
-        // NUEVO: Inputs para rutas personalizadas
         const modelsPathInput = document.getElementById('models-path');
         const markersPathInput = document.getElementById('markers-path');
         const imagesPathInput = document.getElementById('images-path');
@@ -223,6 +225,21 @@
         });
         
         updateAuthUI();
+        
+        // --- FUNCIÓN INTELIGENTE PARA PARSEAR RUTAS ---
+        function parsePath(inputPath) {
+            const trimmedPath = inputPath.trim();
+            // Regex para extraer la ruta relativa de una URL completa de GitHub.
+            const githubUrlRegex = /github\.com\/[^\/]+\/[^\/]+\/tree\/[^\/]+\/(.*)/;
+            const match = trimmedPath.match(githubUrlRegex);
+            
+            if (match && match[1]) {
+                // Si es una URL completa, devuelve solo la parte de la ruta.
+                return match[1];
+            }
+            // Si no, asume que ya es una ruta relativa.
+            return trimmedPath;
+        }
 
         // --- EVENT LISTENERS PRINCIPALES ---
         analyzeBtn.addEventListener('click', handleAnalyzeRepository);
@@ -239,7 +256,7 @@
                 return;
             }
 
-            const urlParts = repoUrl.match(/github\.com\/([^\/]+)\/([^\/]+)/);
+            const urlParts = repoUrl.match(/github\.com\/([^\/]+\)\/([^\/]+)/);
             if (!urlParts || urlParts.length < 3) {
                 showStatus('La URL del repositorio no es válida. Formato esperado: https://github.com/usuario/repo', 'error');
                 return;
@@ -253,11 +270,11 @@
             filePreview.classList.add('hidden');
 
             try {
-                // MODIFICADO: Usa las rutas de los inputs, o los valores por defecto si están vacíos.
+                // Usa la nueva función parsePath para manejar URLs completas o rutas relativas.
                 const paths = { 
-                    models: modelsPathInput.value.trim() || 'assets/models', 
-                    markers: markersPathInput.value.trim() || 'assets/markers', 
-                    images: imagesPathInput.value.trim() || 'assets/images' 
+                    models: parsePath(modelsPathInput.value.trim() || modelsPathInput.placeholder),
+                    markers: parsePath(markersPathInput.value.trim() || markersPathInput.placeholder),
+                    images: parsePath(imagesPathInput.value.trim() || imagesPathInput.placeholder)
                 };
 
                 const modelFiles = await getFileNamesFromRepo(owner, repo, paths.models, ['.glb'], token);
@@ -280,7 +297,6 @@
                     logoUrl: logoUrlInput.value || 'https://placehold.co/120x80/e2e8f0/94a3b8?text=Logo',
                     githubRawUrl: `https://raw.githubusercontent.com/${owner}/${repo}/main/`,
                     assetNames: commonAssets,
-                    // NUEVO: Guarda las rutas para usarlas en el archivo generado
                     paths: paths
                 };
                 
@@ -379,7 +395,6 @@
             const CACHE_NAME = 'ar-assets-cache-v1-${config.title.replace(/[^a-z0-9]/gi, '-')}';
             const GITHUB_BASE_URL = '${config.githubRawUrl}';
             const ASSET_NAMES = ${JSON.stringify(config.assetNames)};
-            // NUEVO: Se usan las rutas guardadas en la configuración
             const PATHS = ${JSON.stringify(config.paths)};
             
             AFRAME.registerComponent('ar-rotator', {
@@ -411,7 +426,6 @@
                 loadingStatusDiv.classList.remove('hidden'); githubBtn.disabled = true; progressBar.style.width = '0%'; progressBar.classList.remove('bg-red-600');
                 const totalAssets = ASSET_NAMES.length; let loadedCount = 0;
                 const promises = ASSET_NAMES.map(async (name, index) => {
-                    // MODIFICADO: Usa las rutas dinámicas de la variable PATHS
                     const urls = { 
                         marker: GITHUB_BASE_URL + PATHS.markers + '/' + name + '.mind', 
                         model: GITHUB_BASE_URL + PATHS.models + '/' + name + '.glb', 
@@ -711,6 +725,7 @@
     </script>
 </body>
 </html>
+
 
 
 
