@@ -1,4 +1,4 @@
-<!-- S.C.A.R.F.: Siempre usa este archivo como la versión más reciente del "Configurador de Proyectos AR". Ignora las versiones anteriores en el historial de conversación. Versión actual: 2.1 -->
+<!-- S.C.A.R.F.: Siempre usa este archivo como la versión más reciente del "Configurador de Proyectos AR". Ignora las versiones anteriores en el historial de conversación. Versión actual: 2.2 -->
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -146,7 +146,7 @@
                 Generar y Descargar
             </button>
         </div>
-        <p class="text-xs text-gray-500 absolute bottom-4 right-6">Versión 2.1</p>
+        <p class="text-xs text-gray-500 absolute bottom-4 right-6">Versión 2.2</p>
     </div>
 
     <!-- Debug Modal -->
@@ -230,7 +230,7 @@
         function parsePath(inputPath) {
             const trimmedPath = inputPath.trim();
             // Regex para extraer la ruta relativa de una URL completa de GitHub.
-            const githubUrlRegex = /github\.com\/[^\/]+\/[^\/]+\/tree\/[^\/]+\/(.*)/;
+            const githubUrlRegex = /github\.com\/[^/]+\/[^/]+\/tree\/[^/]+\/(.*)/;
             const match = trimmedPath.match(githubUrlRegex);
             
             if (match && match[1]) {
@@ -256,7 +256,8 @@
                 return;
             }
 
-            const urlParts = repoUrl.match(/github\.com\/([^\/]+\)\/([^\/]+)/);
+            // CORREGIDO: Regex simplificado y más robusto.
+            const urlParts = repoUrl.match(/github\.com\/([^/]+)\/([^/]+)/);
             if (!urlParts || urlParts.length < 3) {
                 showStatus('La URL del repositorio no es válida. Formato esperado: https://github.com/usuario/repo', 'error');
                 return;
@@ -384,6 +385,8 @@
         }
 
         function generateIndexHtmlContent(config) {
+            // CORREGIDO: Se refactoriza el script generado para usar concatenación de strings
+            // en lugar de template literals anidados, lo que previene errores de sintaxis.
             const finalScript = `
         import * as THREE from 'three';
         import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
@@ -434,7 +437,9 @@
                     const [markerRes, modelRes, imageRes] = await Promise.all([ fetchWithCache(urls.marker), fetchWithCache(urls.model), fetch(urls.image).catch(() => fetch(GITHUB_BASE_URL + PATHS.images + '/' + name + '.png')) ]);
                     if (!markerRes.ok || !modelRes.ok || !imageRes.ok) { throw new Error('Failed to fetch assets for ' + name); }
                     const [markerBlob, modelBlob, imageBlob] = await Promise.all([ markerRes.blob(), modelRes.blob(), imageRes.blob() ]);
-                    loadedCount++; progressBar.style.width = \`\${(loadedCount / totalAssets) * 100}%\`; loadingText.textContent = \`Cargando \${name}... (\${loadedCount}/\${totalAssets})\`;
+                    loadedCount++;
+                    progressBar.style.width = (loadedCount / totalAssets) * 100 + '%';
+                    loadingText.textContent = 'Cargando ' + name + '... (' + loadedCount + '/' + totalAssets + ')';
                     return { id: index, name: name, markerDataUrl: URL.createObjectURL(markerBlob), modelDataUrl: URL.createObjectURL(modelBlob), imageDataUrl: URL.createObjectURL(imageBlob), transform: { position: { x: 0, y: 0, z: 0 }, rotation: { x: 0, y: 0, z: 0 }, scale: { x: 1, y: 1, z: 1 } }, hasBeenNormalized: false, normalizationFactor: 1, };
                 });
                 try {
@@ -493,7 +498,20 @@
                 sceneEl.setAttribute('mindar-image', mindARSettings); sceneEl.setAttribute('vr-mode-ui', 'enabled: false'); sceneEl.setAttribute('device-orientation-permission-ui', 'enabled: false'); sceneEl.setAttribute('color-space', 'sRGB'); sceneEl.setAttribute('renderer', 'colorManagement: true, physicallyCorrectLights');
                 const preloadedAssets = document.querySelector('#ar-preload-container a-assets'); if(preloadedAssets) { sceneEl.appendChild(preloadedAssets.cloneNode(true)); }
                 const cameraEl = document.createElement('a-camera'); cameraEl.setAttribute('position', '0 0 0'); cameraEl.setAttribute('look-controls', 'enabled: false'); cameraEl.setAttribute('fov', '75'); sceneEl.appendChild(cameraEl);
-                state.assets.forEach((asset, index) => { const targetEl = document.createElement('a-entity'); targetEl.setAttribute('mindar-image-target', 'targetIndex: ' + index); const t = asset.transform; const finalScale = t.scale.x * asset.normalizationFactor; const modelEntity = document.createElement('a-gltf-model'); modelEntity.setAttribute('src', '#model-' + asset.id); modelEntity.setAttribute('position', \`\${t.position.x} \${t.position.y} \${t.position.z}\`); modelEntity.setAttribute('rotation', \`\${t.rotation.x} \${t.rotation.y} \${t.rotation.z}\`); modelEntity.setAttribute('scale', \`\${finalScale} \${finalScale} \${finalScale}\`); modelEntity.setAttribute('ar-rotator', ''); targetEl.appendChild(modelEntity); sceneEl.appendChild(targetEl); });
+                state.assets.forEach((asset, index) => { 
+                    const targetEl = document.createElement('a-entity'); 
+                    targetEl.setAttribute('mindar-image-target', 'targetIndex: ' + index); 
+                    const t = asset.transform; 
+                    const finalScale = t.scale.x * asset.normalizationFactor; 
+                    const modelEntity = document.createElement('a-gltf-model'); 
+                    modelEntity.setAttribute('src', '#model-' + asset.id); 
+                    modelEntity.setAttribute('position', t.position.x + ' ' + t.position.y + ' ' + t.position.z); 
+                    modelEntity.setAttribute('rotation', t.rotation.x + ' ' + t.rotation.y + ' ' + t.rotation.z); 
+                    modelEntity.setAttribute('scale', finalScale + ' ' + finalScale + ' ' + finalScale); 
+                    modelEntity.setAttribute('ar-rotator', ''); 
+                    targetEl.appendChild(modelEntity); 
+                    sceneEl.appendChild(targetEl); 
+                });
                 const scanningUI = document.getElementById('scanning-ui');
                 sceneEl.addEventListener('loaded', () => { const mindarSystem = sceneEl.systems['mindar-image-system']; mindarSystem.start(); });
                 sceneEl.addEventListener('arReady', () => { scanningUI.classList.remove('hidden'); arPreloader.classList.add('hidden'); setTimeout(() => { if (sceneEl.renderer) { sceneEl.renderer.setSize(window.innerWidth, window.innerHeight); } }, 100); });
@@ -528,7 +546,6 @@
                     if (keys.length === 0) throw new Error("Cache vacío.");
 
                     const assets = await Promise.all(ASSET_NAMES.map(async (name, index) => {
-                        // MODIFICADO: Usa las rutas dinámicas para buscar en la caché.
                         const urls = { 
                             marker: GITHUB_BASE_URL + PATHS.markers + '/' + name + '.mind', 
                             model: GITHUB_BASE_URL + PATHS.models + '/' + name + '.glb', 
@@ -580,6 +597,7 @@
         });
             `;
 
+            // CORREGIDO: Se remueve el `\` que causaba el error de sintaxis.
             return `
 <!DOCTYPE html>
 <html lang="es">
